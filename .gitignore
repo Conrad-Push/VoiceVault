@@ -1,0 +1,40 @@
+# Flutter/Dart
+**/build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.iml
+.idea/
+
+# Firebase
+firebase-debug.log
+firebase-debug.*
+/functions/node_modules/
+/functions/package-lock.json
+android/app/google-services.json
+
+# macOS
+.DS_Store
+.macos/
+
+# Windows
+Thumbs.db
+
+# Linux
+*.swp
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Artifacts
+*.svg.tmp
