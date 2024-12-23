@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import '../services/firebase/firestore_service.dart';
 import 'user_card.dart';
-import '../services/firebase_service.dart';
 import '../widgets/custom_modal.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
@@ -120,7 +120,7 @@ class UsersList extends StatelessWidget {
                 }
 
                 try {
-                  await FirebaseService.instance.deleteUser(userId, context);
+                  await FirestoreService.instance.deleteUser(userId);
                   if (context.mounted) {
                     Navigator.of(context).pop();
                     onUserDeleted();

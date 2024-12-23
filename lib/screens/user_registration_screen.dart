@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/firebase_service.dart';
+import '../services/firebase/firestore_service.dart'; // Zmiana importu na FirestoreService
 import '../widgets/app_header.dart';
 import '../widgets/network_status_banner.dart';
 import '../widgets/screen_title.dart';
@@ -36,10 +36,9 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
       _formKey.currentState!.save();
 
       try {
-        final emailExists = await FirebaseService.instance.isEmailRegistered(
-          _email!,
-          context,
-        );
+        // Użycie FirestoreService do sprawdzenia emaila
+        final emailExists =
+            await FirestoreService.instance.isEmailRegistered(_email!);
 
         if (emailExists) {
           setState(() {
@@ -49,7 +48,8 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
           return;
         }
 
-        await FirebaseService.instance.addUser(
+        // Użycie FirestoreService do dodania użytkownika
+        await FirestoreService.instance.addUser(
           name: _name!,
           email: _email!,
         );

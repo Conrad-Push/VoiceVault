@@ -8,7 +8,7 @@ import '../widgets/network_status_banner.dart';
 import '../widgets/custom_modal.dart';
 import 'user_registration_screen.dart';
 import '../utils/constants.dart';
-import '../services/firebase_service.dart';
+import '../services/firebase/firestore_service.dart'; // Zmieniono import
 import '../models/user_model.dart';
 import '../providers/connectivity_provider.dart';
 
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _fetchUsers() {
     setState(() {
-      _usersFuture = FirebaseService.instance.fetchUsers(context);
+      _usersFuture = FirestoreService.instance.fetchUsers(); // Zmiana wywołania
     });
   }
 
@@ -117,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       appBar: const AppHeader(title: 'Voice Vault'),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        // Dodano SafeArea
         child: Column(
           children: [
             const NetworkStatusBanner(),
