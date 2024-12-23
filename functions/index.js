@@ -47,7 +47,7 @@ exports.onUserDelete = functions.firestore.onDocumentDeleted(
 exports.onRecordingUpload = functions.storage.onObjectFinalized(
   async (event) => {
     try {
-      const filePath = event.name; // Ścieżka pliku w Firebase Storage
+      const filePath = event.data.name; // Ścieżka pliku w Firebase Storage
       console.log(`Plik przesłany: ${filePath}`);
 
       // Rozdzielamy ścieżkę na części
