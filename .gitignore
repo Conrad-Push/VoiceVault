@@ -13,6 +13,7 @@ firebase-debug.*
 /functions/node_modules/
 /functions/package-lock.json
 android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
 
 # macOS
 .DS_Store
