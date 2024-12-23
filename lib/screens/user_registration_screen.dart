@@ -168,7 +168,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
             const ScreenTitle(title: AppTexts.registrationTitle),
             const SizedBox(height: 16),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -205,6 +205,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(

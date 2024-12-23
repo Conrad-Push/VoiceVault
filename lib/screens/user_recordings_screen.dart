@@ -88,29 +88,31 @@ class UserRecordingsScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ScreenTitle(title: 'Nagrania użytkownika - $userName'),
-            const SizedBox(height: 16),
-            ..._buildSection('Próbki głosu', voiceSamples),
-            const SizedBox(height: 16),
-            ..._buildSection('Hasła indywidualne', individualPasswords),
-            const SizedBox(height: 16),
-            ..._buildSection('Hasła współdzielone', sharedPasswords),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CustomButton(
-                label: 'Powrót do listy',
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                color: Colors.red,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              ScreenTitle(title: 'Nagrania użytkownika - $userName'),
+              const SizedBox(height: 16),
+              ..._buildSection('Próbki głosu', voiceSamples),
+              const SizedBox(height: 16),
+              ..._buildSection('Hasła indywidualne', individualPasswords),
+              const SizedBox(height: 16),
+              ..._buildSection('Hasła współdzielone', sharedPasswords),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: CustomButton(
+                  label: 'Powrót do listy',
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  color: Colors.red,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
