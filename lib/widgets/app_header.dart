@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool automaticallyImplyLeading;
+  final Widget? trailing;
 
   const AppHeader({
     super.key,
     required this.title,
-    this.automaticallyImplyLeading = true, // Domyślnie strzałka jest widoczna
+    this.automaticallyImplyLeading = true,
+    this.trailing,
   });
 
   @override
@@ -22,7 +24,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
       centerTitle: true,
       backgroundColor: const Color(0xFF5A7D9A),
-      automaticallyImplyLeading: automaticallyImplyLeading, // Kontrola strzałki
+      automaticallyImplyLeading: automaticallyImplyLeading,
+      actions: [
+        if (trailing != null) trailing!,
+      ],
     );
   }
 

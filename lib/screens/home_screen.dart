@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../widgets/app_header.dart';
 import '../widgets/users_list.dart';
 import '../widgets/custom_button.dart';
@@ -8,9 +7,11 @@ import '../widgets/network_status_banner.dart';
 import '../widgets/custom_modal.dart';
 import 'user_registration_screen.dart';
 import '../utils/constants.dart';
-import '../services/firebase_service.dart';
+import '../services/firebase/firestore_service.dart';
 import '../models/user_model.dart';
+import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
+import '../widgets/connection_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _fetchUsers() {
     setState(() {
-      _usersFuture = FirebaseService.instance.fetchUsers(context);
+      _usersFuture = FirestoreService.instance.fetchUsers();
     });
   }
 
@@ -95,12 +96,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
                   if (isConnected) {
                     Navigator.of(context).pop();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const UserRegistrationScreen(),
-                      ),
-                    );
                   }
                 }
               },
@@ -114,10 +109,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppHeader(title: 'Voice Vault'),
+      appBar: AppHeader(
+        title: 'Voice Vault',
+        trailing: const ConnectionIcon(),
+      ),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        // Dodano SafeArea
         child: Column(
           children: [
             const NetworkStatusBanner(),

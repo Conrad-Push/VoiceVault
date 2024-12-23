@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/firebase_service.dart';
+import '../services/firebase/firebase_core_service.dart'; // Zmieniony import
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -46,7 +46,8 @@ class _SplashScreenState extends State<SplashScreen>
       await Future.delayed(const Duration(seconds: 3));
 
       if (mounted) {
-        await FirebaseService.instance.initializeFirebase(context);
+        // Przekazujemy context do serwisu FirebaseCoreService
+        await FirebaseCoreService.instance.initializeFirebase(context);
       }
       debugPrint('Firebase initialized successfully!');
 
