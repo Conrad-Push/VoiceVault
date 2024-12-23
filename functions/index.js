@@ -18,7 +18,17 @@ exports.onUserDelete = functions.firestore.onDocumentDeleted(
         .bucket()
         .getFiles({ prefix: userFolderPath });
 
-      const deletePromises = files.map((file) => file.delete());
+      // Oznaczamy usuwanie plików metadanymi
+      const deletePromises = files.map((file) =>
+        file
+          .setMetadata({
+            metadata: {
+              skipTrigger: "true", // Metadane, które oznaczają plik do pominięcia w onRecordingDelete
+            },
+          })
+          .then(() => file.delete())
+      );
+
       await Promise.all(deletePromises);
 
       console.log(
@@ -75,7 +85,20 @@ exports.onRecordingUpload = functions.storage.onObjectFinalized(
 // Funkcja zmniejszająca licznik po usunięciu pliku
 exports.onRecordingDelete = functions.storage.onObjectDeleted(async (event) => {
   try {
-    const filePath = event.name; // Ścieżka pliku w Firebase Storage
+    const filePath = event.data.name; // Ścieżka pliku
+    const metadata = event.data.metadata || {}; // Pobieramy metadane pliku
+    const skipTrigger = metadata.skipTrigger === "true"; // Sprawdzamy flagę skipTrigger
+
+    if (!filePath) {
+      console.error("Ścieżka pliku jest niezdefiniowana.");
+      return;
+    }
+
+    if (skipTrigger) {
+      console.log(`Usunięcie pliku pominięte: ${filePath}`);
+      return; // Pomijamy, jeśli plik został oznaczony do pominięcia
+    }
+
     console.log(`Plik usunięty: ${filePath}`);
 
     // Rozdzielamy ścieżkę na części
