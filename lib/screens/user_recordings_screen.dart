@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/constants.dart';
@@ -17,10 +18,20 @@ class UserRecordingsScreen extends StatefulWidget {
 
 class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
   late Future<Map<String, List<Map<String, dynamic>>>> _recordingsFuture;
+  bool _showLoader = true;
 
   @override
   void initState() {
     super.initState();
+
+    // Dodanie minimalnego czasu wyświetlania loadera
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _showLoader = false;
+        });
+      }
+    });
 
     // Pobieranie userId z providera i fetchowanie nagrań
     final userId = context.read<UserRecordingsProvider>().userId;
@@ -52,9 +63,12 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
       ...recordings.map((recording) {
         return RecordingCard(
           title: recording['title'],
-          subtitle:
-              recording['isRecorded'] ? recording['subtitle'] : 'Brak nagrania',
-          duration: recording['isRecorded'] ? recording['duration'] : null,
+          subtitle: recording['isRecorded']
+              ? 'Nagrano: ${recording['subtitle']}'
+              : 'Brak nagrania',
+          duration: recording['isRecorded']
+              ? 'Długość nagrania (s): ${recording['duration']}'
+              : null,
           isRecorded: recording['isRecorded'],
         );
       }),
@@ -72,17 +86,31 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              ScreenTitle(title: 'Nagrania użytkownika - $userName'),
-              const SizedBox(height: 16),
-              FutureBuilder<Map<String, List<Map<String, dynamic>>>>(
+        child: Column(
+          children: [
+            ScreenTitle(title: 'Nagrania użytkownika - $userName'),
+            const SizedBox(height: 16),
+            Expanded(
+              child: FutureBuilder<Map<String, List<Map<String, dynamic>>>>(
                 future: _recordingsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
+                  if (_showLoader ||
+                      snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Ładowanie nagrań...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   }
 
@@ -103,36 +131,36 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
                         'sharedPasswords': [],
                       };
 
-                  return Column(
-                    children: [
-                      ..._buildSection(
-                          'Próbki głosu', recordings['individualSamples']!),
-                      const SizedBox(height: 16),
-                      ..._buildSection('Hasła indywidualne',
-                          recordings['individualPasswords']!),
-                      const SizedBox(height: 16),
-                      ..._buildSection('Hasła współdzielone',
-                          recordings['sharedPasswords']!),
-                    ],
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ..._buildSection(
+                            'Próbki głosu', recordings['individualSamples']!),
+                        const SizedBox(height: 16),
+                        ..._buildSection('Hasła indywidualne',
+                            recordings['individualPasswords']!),
+                        const SizedBox(height: 16),
+                        ..._buildSection('Hasła współdzielone',
+                            recordings['sharedPasswords']!),
+                      ],
+                    ),
                   );
                 },
               ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: CustomButton(
-                  label: 'Powrót do listy',
-                  onPressed: () {
-                    // Czyszczenie providera i powrót
-                    context.read<UserRecordingsProvider>().clearData();
-                    Navigator.pop(context);
-                  },
-                  color: Colors.red,
-                ),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CustomButton(
+                label: 'Powrót do listy',
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                color: Colors.red,
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
