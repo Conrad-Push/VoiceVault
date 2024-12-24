@@ -5,6 +5,8 @@ import 'user_card.dart';
 import '../widgets/custom_modal.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/user_recordings_provider.dart';
+import '../screens/user_recordings_screen.dart';
 
 class UsersList extends StatelessWidget {
   final List<UserModel>? users;
@@ -65,8 +67,22 @@ class UsersList extends StatelessWidget {
         return UserCard(
           name: user.displayName,
           email: user.email,
-          // Licznik nagrań: suma trzech typów nagrań
           recordings: '$totalRecordings/13',
+          onTap: () {
+            // Ustawiamy użytkownika w providerze
+            context.read<UserRecordingsProvider>().setUser(
+                  userId: user.id,
+                  userName: user.displayName,
+                );
+
+            // Przechodzimy na ekran nagrań
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserRecordingsScreen(),
+              ),
+            );
+          },
           onLongPress: () {
             _showDeleteUserModal(context, user.id, user.displayName);
           },

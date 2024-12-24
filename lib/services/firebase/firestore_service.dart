@@ -99,6 +99,68 @@ class FirestoreService {
     }
   }
 
+  Future<Map<String, List<Map<String, dynamic>>>> fetchRecordings(
+      String userId) async {
+    try {
+      final recordingsCollection = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('recordings');
+
+      // Pobieranie danych dla każdego typu nagrania
+      final types = [
+        'individualSamples',
+        'individualPasswords',
+        'sharedPasswords'
+      ];
+      final Map<String, List<Map<String, dynamic>>> recordingsData = {};
+
+      for (final type in types) {
+        final snapshot =
+            await recordingsCollection.doc(type).collection(type).get();
+
+        final recordings = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'title': doc.id,
+            'subtitle': data['uploadedAt']?.toDate()?.toString() ?? 'Brak daty',
+            'duration': data['duration']?.toString() ?? '0s',
+            'isRecorded': true,
+          };
+        }).toList();
+
+        // Uzupełnianie brakujących nagrań
+        final expectedCount = type == 'individualSamples' ? 3 : 5;
+        for (int i = 0; i < expectedCount; i++) {
+          final fileName =
+              '${type[0].toUpperCase()}${type.substring(1)}${i + 1}';
+          if (!recordings.any((recording) => recording['title'] == fileName)) {
+            recordings.add({
+              'title': fileName,
+              'subtitle': 'Brak daty',
+              'duration': '0s',
+              'isRecorded': false,
+            });
+          }
+        }
+
+        recordingsData[type] = recordings;
+      }
+
+      LoggingService.instance.log(
+        'Fetched recordings for user $userId successfully.',
+        level: 'info',
+      );
+      return recordingsData;
+    } catch (e) {
+      LoggingService.instance.log(
+        'Failed to fetch recordings for user $userId: $e',
+        level: 'error',
+      );
+      rethrow;
+    }
+  }
+
   Future<void> addRecording({
     required String userId,
     required String type,

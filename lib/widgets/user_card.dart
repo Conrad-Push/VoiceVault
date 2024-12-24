@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../screens/user_recordings_screen.dart';
-// Import ekranu nagrań
-
 class UserCard extends StatefulWidget {
   final String name;
   final String email;
   final String recordings;
+  final VoidCallback? onTap; // Dodano obsługę onTap
   final VoidCallback? onLongPress;
 
   const UserCard({
@@ -15,6 +13,7 @@ class UserCard extends StatefulWidget {
     required this.name,
     required this.email,
     required this.recordings,
+    this.onTap,
     this.onLongPress,
   });
 
@@ -34,14 +33,7 @@ class _UserCardState extends State<UserCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => UserRecordingsScreen(userName: widget.name),
-          ),
-        );
-      },
+      onTap: widget.onTap, // Obsługa onTap
       onLongPressStart: (_) {
         setState(() {
           _isPressed = true;

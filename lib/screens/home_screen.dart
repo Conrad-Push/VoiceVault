@@ -11,6 +11,7 @@ import '../services/firebase/firestore_service.dart';
 import '../models/user_model.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/user_recordings_provider.dart';
 import '../widgets/connection_icon.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,6 +30,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _fetchUsers();
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserRecordingsProvider>().clearData();
+    });
+
     context.read<ConnectivityProvider>().addListener(() {
       if (mounted && context.read<ConnectivityProvider>().isConnected) {
         _fetchUsers();
@@ -46,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _fetchUsers();
+      _clearUserRecordingsProvider();
     }
   }
 
@@ -53,6 +59,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _usersFuture = FirestoreService.instance.fetchUsers();
     });
+  }
+
+  void _clearUserRecordingsProvider() {
+    context.read<UserRecordingsProvider>().clearData();
   }
 
   void _showNoConnectionModal() {

@@ -1,17 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/constants.dart';
 import '../widgets/app_header.dart';
 import '../widgets/screen_title.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/recording_card.dart';
+import '../providers/user_recordings_provider.dart';
+import '../services/firebase/firestore_service.dart';
 
-class UserRecordingsScreen extends StatelessWidget {
-  final String userName;
+class UserRecordingsScreen extends StatefulWidget {
+  const UserRecordingsScreen({super.key});
 
-  const UserRecordingsScreen({
-    super.key,
-    required this.userName,
-  });
+  @override
+  State<UserRecordingsScreen> createState() => _UserRecordingsScreenState();
+}
+
+class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
+  late Future<Map<String, List<Map<String, dynamic>>>> _recordingsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pobieranie userId z providera i fetchowanie nagrań
+    final userId = context.read<UserRecordingsProvider>().userId;
+    if (userId != null) {
+      _recordingsFuture = FirestoreService.instance.fetchRecordings(userId);
+    } else {
+      _recordingsFuture = Future.value({
+        'individualSamples': [],
+        'individualPasswords': [],
+        'sharedPasswords': [],
+      });
+    }
+  }
 
   List<Widget> _buildSection(
       String title, List<Map<String, dynamic>> recordings) {
@@ -41,46 +63,7 @@ class UserRecordingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> voiceSamples = [
-      {
-        'title': 'Próbka #1',
-        'subtitle': '2023-12-01',
-        'duration': '10s',
-        'isRecorded': true
-      },
-      {
-        'title': 'Próbka #2',
-        'subtitle': 'Brak daty',
-        'duration': '0s',
-        'isRecorded': false
-      },
-      {
-        'title': 'Próbka #3',
-        'subtitle': '2023-12-02',
-        'duration': '15s',
-        'isRecorded': true
-      },
-    ];
-
-    final List<Map<String, dynamic>> individualPasswords = List.generate(
-      5,
-      (index) => {
-        'title': 'Hasło #${index + 1}',
-        'subtitle': 'Brak daty',
-        'duration': '0s',
-        'isRecorded': false,
-      },
-    );
-
-    final List<Map<String, dynamic>> sharedPasswords = List.generate(
-      5,
-      (index) => {
-        'title': 'Hasło współdzielone #${index + 1}',
-        'subtitle': '2023-12-03',
-        'duration': '8s',
-        'isRecorded': index % 2 == 0, // Tylko co drugie nagranie istnieje
-      },
-    );
+    final userName = context.watch<UserRecordingsProvider>().userName;
 
     return Scaffold(
       appBar: AppHeader(
@@ -94,17 +77,54 @@ class UserRecordingsScreen extends StatelessWidget {
             children: [
               ScreenTitle(title: 'Nagrania użytkownika - $userName'),
               const SizedBox(height: 16),
-              ..._buildSection('Próbki głosu', voiceSamples),
-              const SizedBox(height: 16),
-              ..._buildSection('Hasła indywidualne', individualPasswords),
-              const SizedBox(height: 16),
-              ..._buildSection('Hasła współdzielone', sharedPasswords),
+              FutureBuilder<Map<String, List<Map<String, dynamic>>>>(
+                future: _recordingsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Błąd podczas pobierania nagrań',
+                        style: const TextStyle(fontSize: 16, color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+
+                  final recordings = snapshot.data ??
+                      {
+                        'individualSamples': [],
+                        'individualPasswords': [],
+                        'sharedPasswords': [],
+                      };
+
+                  return Column(
+                    children: [
+                      ..._buildSection(
+                          'Próbki głosu', recordings['individualSamples']!),
+                      const SizedBox(height: 16),
+                      ..._buildSection('Hasła indywidualne',
+                          recordings['individualPasswords']!),
+                      const SizedBox(height: 16),
+                      ..._buildSection('Hasła współdzielone',
+                          recordings['sharedPasswords']!),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: CustomButton(
                   label: 'Powrót do listy',
                   onPressed: () {
+                    // Czyszczenie providera i powrót
+                    context.read<UserRecordingsProvider>().clearData();
                     Navigator.pop(context);
                   },
                   color: Colors.red,
