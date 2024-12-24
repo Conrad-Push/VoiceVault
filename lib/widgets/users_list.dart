@@ -56,10 +56,17 @@ class UsersList extends StatelessWidget {
       itemCount: users!.length,
       itemBuilder: (context, index) {
         final user = users![index];
+
+        // Obliczamy sumę wszystkich nagrań użytkownika
+        final totalRecordings = user.individualSamples +
+            user.individualPasswords +
+            user.sharedPasswords;
+
         return UserCard(
           name: user.displayName,
           email: user.email,
-          recordings: '${user.individualSamples}/13',
+          // Licznik nagrań: suma trzech typów nagrań
+          recordings: '$totalRecordings/13',
           onLongPress: () {
             _showDeleteUserModal(context, user.id, user.displayName);
           },

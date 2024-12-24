@@ -65,11 +65,73 @@ class FirestoreService {
 
   Future<void> deleteUser(String userId) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-      LoggingService.instance
-          .log('User with ID $userId deleted successfully.', level: 'info');
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(userId);
+
+      // Pobieranie podkolekcji 'recordings'
+      final recordingsRef = userRef.collection('recordings');
+      final recordingsSnapshot = await recordingsRef.get();
+
+      // Usuwanie podkolekcji 'recordings'
+      for (final doc in recordingsSnapshot.docs) {
+        final subcollectionRef = recordingsRef.doc(doc.id).collection(doc.id);
+        final subcollectionSnapshot = await subcollectionRef.get();
+
+        for (final subDoc in subcollectionSnapshot.docs) {
+          await subDoc.reference.delete();
+        }
+
+        // Usuwamy sam dokument podkolekcji (np. 'individualSamples', 'sharedPasswords')
+        await doc.reference.delete();
+      }
+
+      // Na końcu usuwamy dokument główny użytkownika
+      await userRef.delete();
+
+      LoggingService.instance.log(
+          'User with ID $userId and all related recordings deleted successfully.',
+          level: 'info');
     } catch (e) {
-      LoggingService.instance.log('Failed to delete user: $e', level: 'error');
+      LoggingService.instance.log(
+          'Failed to delete user $userId and related recordings: $e',
+          level: 'error');
+      rethrow;
+    }
+  }
+
+  Future<void> addRecording({
+    required String userId,
+    required String type,
+    required String filePath,
+    required Timestamp uploadedAt,
+    required double duration,
+    required String fileName,
+  }) async {
+    try {
+      final recordingDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('recordings')
+          .doc(type)
+          .collection(type)
+          .doc(fileName);
+
+      final recordingData = {
+        'type': type,
+        'filePath': filePath,
+        'uploadedAt': uploadedAt,
+        'duration': duration,
+      };
+
+      await recordingDocRef.set(recordingData);
+
+      LoggingService.instance.log(
+          'Recording $fileName added successfully for user $userId.',
+          level: 'info');
+    } catch (e) {
+      LoggingService.instance.log(
+          'Failed to add recording $fileName for user $userId: $e',
+          level: 'error');
       rethrow;
     }
   }
