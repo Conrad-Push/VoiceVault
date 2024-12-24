@@ -70,6 +70,46 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
               ? 'Długość nagrania (s): ${recording['duration']}'
               : null,
           isRecorded: recording['isRecorded'],
+          onDelete: recording['isRecorded']
+              ? () async {
+                  try {
+                    // Pobierz userId z providera
+                    final userId =
+                        context.read<UserRecordingsProvider>().userId;
+
+                    if (userId != null) {
+                      // Wywołaj funkcję usuwania w FirestoreService
+                      await FirestoreService.instance.deleteRecording(
+                        userId: userId,
+                        title: recording[
+                            'title'], // Tytuł nagrania jako klucz dokumentu
+                      );
+
+                      // Odśwież dane po usunięciu
+                      setState(() {
+                        _recordingsFuture =
+                            FirestoreService.instance.fetchRecordings(userId);
+                      });
+
+                      // Wyświetl komunikat o sukcesie
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Nagranie zostało usunięte.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // Obsługa błędu
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Błąd podczas usuwania nagrania: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              : null,
         );
       }),
     ];

@@ -5,6 +5,7 @@ class RecordingCard extends StatelessWidget {
   final String subtitle;
   final String? duration; // Czas może być null
   final bool isRecorded;
+  final VoidCallback? onDelete; // Callback do obsługi usuwania
 
   const RecordingCard({
     super.key,
@@ -12,6 +13,7 @@ class RecordingCard extends StatelessWidget {
     required this.subtitle,
     this.duration,
     required this.isRecorded,
+    this.onDelete,
   });
 
   @override
@@ -69,6 +71,12 @@ class RecordingCard extends StatelessWidget {
             radius: 10,
             backgroundColor: isRecorded ? Colors.green : Colors.red,
           ),
+          const SizedBox(width: 8),
+          if (isRecorded)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: onDelete,
+            ),
         ],
       ),
     );
