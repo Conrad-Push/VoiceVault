@@ -146,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   return UsersList(
                     users: snapshot.data,
                     onUserDeleted: _fetchUsers,
+                    onReturn: _fetchUsers, // Callback wywoływany po powrocie
                   );
                 },
               ),

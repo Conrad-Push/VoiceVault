@@ -12,12 +12,14 @@ class UsersList extends StatelessWidget {
   final List<UserModel>? users;
   final String? errorMessage;
   final VoidCallback onUserDeleted;
+  final VoidCallback? onReturn; // Nowy callback
 
   const UsersList({
     super.key,
     this.users,
     this.errorMessage,
     required this.onUserDeleted,
+    this.onReturn,
   });
 
   @override
@@ -81,7 +83,17 @@ class UsersList extends StatelessWidget {
               MaterialPageRoute(
                 builder: (context) => const UserRecordingsScreen(),
               ),
-            );
+            ).then((_) {
+              if (context.mounted) {
+                // Czyścimy providera
+                context.read<UserRecordingsProvider>().clearData();
+
+                // Wywołujemy callback po powrocie
+                if (onReturn != null) {
+                  onReturn!();
+                }
+              }
+            });
           },
           onLongPress: () {
             _showDeleteUserModal(context, user.id, user.displayName);
