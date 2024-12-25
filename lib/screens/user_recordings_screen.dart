@@ -10,7 +10,7 @@ import '../widgets/network_status_banner.dart';
 import '../widgets/screen_title.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/recording_card.dart';
-import '../providers/user_recordings_provider.dart';
+import '../providers/user_provider.dart';
 import '../services/firebase/firestore_service.dart';
 
 class UserRecordingsScreen extends StatefulWidget {
@@ -38,7 +38,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
     });
 
     // Pobieranie userId z providera i fetchowanie nagrań
-    final userId = context.read<UserRecordingsProvider>().userId;
+    final userId = context.read<UserProvider>().userId;
     if (userId != null) {
       _recordingsFuture = FirestoreService.instance.fetchRecordings(userId);
     } else {
@@ -179,7 +179,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
           isRecorded: recording['isRecorded'],
           onDelete: recording['isRecorded']
               ? () {
-                  final userId = context.read<UserRecordingsProvider>().userId;
+                  final userId = context.read<UserProvider>().userId;
                   if (userId != null) {
                     _showDeleteRecordingModal(
                         context, userId, recording['title']);
@@ -193,7 +193,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userName = context.watch<UserRecordingsProvider>().userName;
+    final userName = context.watch<UserProvider>().userName;
 
     return Scaffold(
       appBar: AppHeader(

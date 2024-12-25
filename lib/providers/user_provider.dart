@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class UserRecordingsProvider with ChangeNotifier {
+class UserProvider with ChangeNotifier {
   String? _userId;
   String? _userName;
 

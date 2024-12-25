@@ -5,7 +5,7 @@ import 'user_card.dart';
 import '../widgets/custom_modal.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
-import '../providers/user_recordings_provider.dart';
+import '../providers/user_provider.dart';
 import '../screens/user_recordings_screen.dart';
 
 class UsersList extends StatelessWidget {
@@ -72,7 +72,7 @@ class UsersList extends StatelessWidget {
           recordings: '$totalRecordings/13',
           onTap: () {
             // Ustawiamy użytkownika w providerze
-            context.read<UserRecordingsProvider>().setUser(
+            context.read<UserProvider>().setUser(
                   userId: user.id,
                   userName: user.displayName,
                 );
@@ -86,7 +86,7 @@ class UsersList extends StatelessWidget {
             ).then((_) {
               if (context.mounted) {
                 // Czyścimy providera
-                context.read<UserRecordingsProvider>().clearData();
+                context.read<UserProvider>().clearData();
 
                 // Wywołujemy callback po powrocie
                 if (onReturn != null) {
