@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/app_header.dart';
+import '../widgets/connection_icon.dart';
 import '../widgets/custom_modal.dart';
+import '../widgets/network_status_banner.dart';
 import '../widgets/screen_title.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/recording_card.dart';
@@ -197,11 +199,13 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
       appBar: AppHeader(
         title: 'Voice Vault',
         automaticallyImplyLeading: false,
+        trailing: const ConnectionIcon(),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
+            const NetworkStatusBanner(),
             ScreenTitle(title: 'Nagrania użytkownika - $userName'),
             const SizedBox(height: 16),
             Expanded(
