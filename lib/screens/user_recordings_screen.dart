@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/app_header.dart';
+import '../widgets/custom_modal.dart';
 import '../widgets/screen_title.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/recording_card.dart';
@@ -46,6 +48,109 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
     }
   }
 
+  void _showErrorModal(String errorMessage) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Błąd',
+          description:
+              'Nie udało się usunąć nagrania. Szczegóły: $errorMessage',
+          icon: Icons.error,
+          iconColor: Colors.red,
+          closeButtonLabel: 'OK',
+          onClosePressed: () {
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
+  }
+
+  void _showDeleteRecordingModal(
+      BuildContext context, String userId, String recordingTitle) {
+    bool isCheckingConnection = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return CustomModal(
+              title: 'Usuń nagranie',
+              description:
+                  'Czy na pewno chcesz usunąć nagranie "$recordingTitle"?',
+              icon: Icons.delete_forever,
+              iconColor: Colors.red,
+              closeButtonLabel: 'Anuluj',
+              onClosePressed: () => Navigator.of(context).pop(),
+              actionButtonLabel: 'Usuń',
+              actionButtonColor: Colors.red,
+              isLoading: isCheckingConnection,
+              onActionPressed: () async {
+                setModalState(() {
+                  isCheckingConnection = true;
+                });
+
+                final isConnected =
+                    context.read<ConnectivityProvider>().isConnected;
+
+                if (!isConnected) {
+                  setModalState(() {
+                    isCheckingConnection = false;
+                  });
+
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return CustomModal(
+                        title: 'Brak połączenia',
+                        description:
+                            'Nie można usunąć nagrania bez dostępu do Internetu.',
+                        icon: Icons.wifi_off,
+                        iconColor: Colors.red,
+                        closeButtonLabel: 'OK',
+                        onClosePressed: () => Navigator.of(context).pop(),
+                      );
+                    },
+                  );
+                  return;
+                }
+
+                try {
+                  await FirestoreService.instance.deleteRecording(
+                    userId: userId,
+                    title: recordingTitle,
+                  );
+
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _recordingsFuture =
+                          FirestoreService.instance.fetchRecordings(userId);
+                    });
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    _showErrorModal(e.toString());
+                  }
+                } finally {
+                  if (context.mounted) {
+                    setModalState(() {
+                      isCheckingConnection = false;
+                    });
+                  }
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   List<Widget> _buildSection(
       String title, List<Map<String, dynamic>> recordings) {
     return [
@@ -71,42 +176,11 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
               : null,
           isRecorded: recording['isRecorded'],
           onDelete: recording['isRecorded']
-              ? () async {
-                  try {
-                    // Pobierz userId z providera
-                    final userId =
-                        context.read<UserRecordingsProvider>().userId;
-
-                    if (userId != null) {
-                      // Wywołaj funkcję usuwania w FirestoreService
-                      await FirestoreService.instance.deleteRecording(
-                        userId: userId,
-                        title: recording[
-                            'title'], // Tytuł nagrania jako klucz dokumentu
-                      );
-
-                      // Odśwież dane po usunięciu
-                      setState(() {
-                        _recordingsFuture =
-                            FirestoreService.instance.fetchRecordings(userId);
-                      });
-
-                      // Wyświetl komunikat o sukcesie
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Nagranie zostało usunięte.'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    // Obsługa błędu
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Błąd podczas usuwania nagrania: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+              ? () {
+                  final userId = context.read<UserRecordingsProvider>().userId;
+                  if (userId != null) {
+                    _showDeleteRecordingModal(
+                        context, userId, recording['title']);
                   }
                 }
               : null,

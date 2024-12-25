@@ -122,9 +122,9 @@ class FirestoreService {
       final snapshot = await recordingsRef.get();
 
       // Przygotowanie domyślnych kafelków dla każdego typu nagrań
-      recordingTypes.forEach((type, count) {
+      recordingTypes.forEach((type, countValue) {
         recordings[type] = List.generate(
-          count,
+          countValue,
           (index) => {
             'title': _getTitle(type, '$type${index + 1}'),
             'subtitle': 'Brak daty',
