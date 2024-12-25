@@ -11,6 +11,7 @@ import '../services/firebase/firestore_service.dart';
 import '../models/user_model.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/connection_icon.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,6 +30,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _fetchUsers();
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().clearData();
+    });
+
     context.read<ConnectivityProvider>().addListener(() {
       if (mounted && context.read<ConnectivityProvider>().isConnected) {
         _fetchUsers();
@@ -44,8 +49,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed &&
+        ModalRoute.of(context)?.isCurrent == true) {
       _fetchUsers();
+      _clearUserRecordingsProvider();
     }
   }
 
@@ -55,52 +62,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  void _showNoConnectionModal() {
-    bool isCheckingConnection = false;
+  void _clearUserRecordingsProvider() {
+    context.read<UserProvider>().clearData();
+  }
 
+  void _showNoConnectionModal(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return CustomModal(
-              title: 'Problem z siecią',
-              description:
-                  'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
-              icon: Icons.wifi_off,
-              iconColor: Colors.red,
-              iconSize: 48.0,
-              closeButtonLabel: 'Zamknij',
-              onClosePressed: () {
-                if (!isCheckingConnection) {
-                  Navigator.of(context).pop();
-                }
-              },
-              actionButtonLabel: 'Odśwież',
-              isLoading: isCheckingConnection,
-              onActionPressed: () async {
-                setModalState(() {
-                  isCheckingConnection = true;
-                });
-
-                await Future.delayed(const Duration(seconds: 1));
-
-                if (context.mounted) {
-                  final isConnected =
-                      context.read<ConnectivityProvider>().isConnected;
-
-                  setModalState(() {
-                    isCheckingConnection = false;
-                  });
-
-                  if (isConnected) {
-                    Navigator.of(context).pop();
-                  }
-                }
-              },
-            );
-          },
+        return CustomModal(
+          title: 'Problem z siecią',
+          description:
+              'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
+          icon: Icons.wifi_off,
+          iconColor: Colors.red,
+          closeButtonLabel: 'Zamknij',
+          onClosePressed: () => Navigator.of(context).pop(),
         );
       },
     );
@@ -136,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   return UsersList(
                     users: snapshot.data,
                     onUserDeleted: _fetchUsers,
+                    onReturn: _fetchUsers, // Callback wywoływany po powrocie
                   );
                 },
               ),
@@ -157,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       final isConnected =
                           context.read<ConnectivityProvider>().isConnected;
                       if (!isConnected) {
-                        _showNoConnectionModal();
+                        _showNoConnectionModal(context);
                         return;
                       }
 

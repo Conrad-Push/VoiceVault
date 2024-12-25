@@ -5,17 +5,21 @@ import 'user_card.dart';
 import '../widgets/custom_modal.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/user_provider.dart';
+import '../screens/user_recordings_screen.dart';
 
 class UsersList extends StatelessWidget {
   final List<UserModel>? users;
   final String? errorMessage;
   final VoidCallback onUserDeleted;
+  final VoidCallback? onReturn; // Nowy callback
 
   const UsersList({
     super.key,
     this.users,
     this.errorMessage,
     required this.onUserDeleted,
+    this.onReturn,
   });
 
   @override
@@ -56,13 +60,68 @@ class UsersList extends StatelessWidget {
       itemCount: users!.length,
       itemBuilder: (context, index) {
         final user = users![index];
+
+        // Obliczamy sumę wszystkich nagrań użytkownika
+        final totalRecordings = user.individualSamples +
+            user.individualPasswords +
+            user.sharedPasswords;
+
         return UserCard(
           name: user.displayName,
           email: user.email,
-          recordings: '${user.individualSamples}/13',
+          recordings: '$totalRecordings/13',
+          onTap: () {
+            final isConnected =
+                context.read<ConnectivityProvider>().isConnected;
+
+            if (!isConnected) {
+              // Wyświetl modal o braku połączenia
+              _showNoConnectionModal(context);
+              return;
+            }
+
+            // Ustawiamy użytkownika w providerze
+            context.read<UserProvider>().setUser(
+                  userId: user.id,
+                  userName: user.displayName,
+                );
+
+            // Przechodzimy na ekran nagrań
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserRecordingsScreen(),
+              ),
+            ).then((_) {
+              if (context.mounted) {
+                context.read<UserProvider>().clearData();
+                if (onReturn != null) {
+                  onReturn!();
+                }
+              }
+            });
+          },
           onLongPress: () {
             _showDeleteUserModal(context, user.id, user.displayName);
           },
+        );
+      },
+    );
+  }
+
+  void _showNoConnectionModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Problem z siecią',
+          description:
+              'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
+          icon: Icons.wifi_off,
+          iconColor: Colors.red,
+          closeButtonLabel: 'Zamknij',
+          onClosePressed: () => Navigator.of(context).pop(),
         );
       },
     );
