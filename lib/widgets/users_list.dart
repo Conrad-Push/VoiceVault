@@ -71,6 +71,15 @@ class UsersList extends StatelessWidget {
           email: user.email,
           recordings: '$totalRecordings/13',
           onTap: () {
+            final isConnected =
+                context.read<ConnectivityProvider>().isConnected;
+
+            if (!isConnected) {
+              // Wyświetl modal o braku połączenia
+              _showNoConnectionModal(context);
+              return;
+            }
+
             // Ustawiamy użytkownika w providerze
             context.read<UserProvider>().setUser(
                   userId: user.id,
@@ -85,10 +94,7 @@ class UsersList extends StatelessWidget {
               ),
             ).then((_) {
               if (context.mounted) {
-                // Czyścimy providera
                 context.read<UserProvider>().clearData();
-
-                // Wywołujemy callback po powrocie
                 if (onReturn != null) {
                   onReturn!();
                 }
@@ -98,6 +104,24 @@ class UsersList extends StatelessWidget {
           onLongPress: () {
             _showDeleteUserModal(context, user.id, user.displayName);
           },
+        );
+      },
+    );
+  }
+
+  void _showNoConnectionModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Problem z siecią',
+          description:
+              'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
+          icon: Icons.wifi_off,
+          iconColor: Colors.red,
+          closeButtonLabel: 'Zamknij',
+          onClosePressed: () => Navigator.of(context).pop(),
         );
       },
     );

@@ -20,13 +20,15 @@ class UserRecordingsScreen extends StatefulWidget {
   State<UserRecordingsScreen> createState() => _UserRecordingsScreenState();
 }
 
-class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
+class _UserRecordingsScreenState extends State<UserRecordingsScreen>
+    with WidgetsBindingObserver {
   late Future<Map<String, List<Map<String, dynamic>>>> _recordingsFuture;
   bool _showLoader = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // Dodanie minimalnego czasu wyświetlania loadera
     Future.delayed(const Duration(milliseconds: 1500), () {
@@ -37,15 +39,37 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen> {
       }
     });
 
-    // Pobieranie userId z providera i fetchowanie nagrań
+    _fetchRecordings();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        ModalRoute.of(context)?.isCurrent == true) {
+      _fetchRecordings();
+    }
+  }
+
+  void _fetchRecordings() {
     final userId = context.read<UserProvider>().userId;
+
     if (userId != null) {
-      _recordingsFuture = FirestoreService.instance.fetchRecordings(userId);
+      setState(() {
+        _recordingsFuture = FirestoreService.instance.fetchRecordings(userId);
+      });
     } else {
-      _recordingsFuture = Future.value({
-        'individualSamples': [],
-        'individualPasswords': [],
-        'sharedPasswords': [],
+      setState(() {
+        _recordingsFuture = Future.value({
+          'individualSamples': [],
+          'individualPasswords': [],
+          'sharedPasswords': [],
+        });
       });
     }
   }
