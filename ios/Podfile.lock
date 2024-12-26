@@ -1145,6 +1145,8 @@ PODS:
     - abseil/meta/type_traits
     - abseil/xcprivacy
   - abseil/xcprivacy (1.20240116.2)
+  - audio_session (0.0.1):
+    - Flutter
   - BoringSSL-GRPC (0.0.36):
     - BoringSSL-GRPC/Implementation (= 0.0.36)
     - BoringSSL-GRPC/Interface (= 0.0.36)
@@ -1163,10 +1165,18 @@ PODS:
   - Firebase/Firestore (11.4.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 11.4.0)
+  - Firebase/Storage (11.4.0):
+    - Firebase/CoreOnly
+    - FirebaseStorage (~> 11.4.0)
   - firebase_core (3.9.0):
     - Firebase/CoreOnly (= 11.4.0)
     - Flutter
+  - firebase_storage (12.3.7):
+    - Firebase/Storage (= 11.4.0)
+    - firebase_core
+    - Flutter
   - FirebaseAppCheckInterop (11.6.0)
+  - FirebaseAuthInterop (11.6.0)
   - FirebaseCore (11.4.0):
     - FirebaseCoreInternal (~> 11.0)
     - GoogleUtilities/Environment (~> 8.0)
@@ -1196,7 +1206,18 @@ PODS:
     - leveldb-library (~> 1.22)
     - nanopb (~> 3.30910.0)
   - FirebaseSharedSwift (11.6.0)
+  - FirebaseStorage (11.4.0):
+    - FirebaseAppCheckInterop (~> 11.0)
+    - FirebaseAuthInterop (~> 11.0)
+    - FirebaseCore (~> 11.4)
+    - FirebaseCoreExtension (~> 11.4)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GTMSessionFetcher/Core (< 5.0, >= 3.4)
   - Flutter (1.0.0)
+  - flutter_sound (9.17.8):
+    - Flutter
+    - flutter_sound_core (= 9.17.8)
+  - flutter_sound_core (9.17.8)
   - GoogleUtilities/Environment (8.0.2):
     - GoogleUtilities/Privacy
   - GoogleUtilities/Logger (8.0.2):
@@ -1295,18 +1316,29 @@ PODS:
     - gRPC-Core/Privacy (= 1.65.5)
   - gRPC-Core/Interface (1.65.5)
   - gRPC-Core/Privacy (1.65.5)
+  - GTMSessionFetcher/Core (4.1.0)
   - leveldb-library (1.22.6)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - permission_handler_apple (9.3.0):
+    - Flutter
 
 DEPENDENCIES:
+  - audio_session (from `.symlinks/plugins/audio_session/ios`)
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/darwin`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
+  - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
 
 SPEC REPOS:
   trunk:
@@ -1314,49 +1346,72 @@ SPEC REPOS:
     - BoringSSL-GRPC
     - Firebase
     - FirebaseAppCheckInterop
+    - FirebaseAuthInterop
     - FirebaseCore
     - FirebaseCoreExtension
     - FirebaseCoreInternal
     - FirebaseFirestore
     - FirebaseFirestoreInternal
     - FirebaseSharedSwift
+    - FirebaseStorage
+    - flutter_sound_core
     - GoogleUtilities
     - "gRPC-C++"
     - gRPC-Core
+    - GTMSessionFetcher
     - leveldb-library
     - nanopb
 
 EXTERNAL SOURCES:
+  audio_session:
+    :path: ".symlinks/plugins/audio_session/ios"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
   connectivity_plus:
     :path: ".symlinks/plugins/connectivity_plus/darwin"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
+  firebase_storage:
+    :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
     :path: Flutter
+  flutter_sound:
+    :path: ".symlinks/plugins/flutter_sound/ios"
+  path_provider_foundation:
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
 
 SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3
+  audio_session: 088d2483ebd1dc43f51d253d4a1c517d9a2e7207
   BoringSSL-GRPC: ca6a8e5d04812fce8ffd6437810c2d46f925eaeb
   cloud_firestore: 56bca083ecf07f16188ace1d5b57123bcb1b3465
   connectivity_plus: 18382e7311ba19efcaee94442b23b32507b20695
   Firebase: cf1b19f21410b029b6786a54e9764a0cacad3c99
   firebase_core: b62a5080210edad3f2934314a8b2c6f5124e8e10
+  firebase_storage: 8826dc971e5029b48826613f7265952e55191585
   FirebaseAppCheckInterop: 347aa09a805219a31249b58fc956888e9fcb314b
+  FirebaseAuthInterop: a919d415797d23b7bfe195a04f322b86c65020ef
   FirebaseCore: e0510f1523bc0eb21653cac00792e1e2bd6f1771
   FirebaseCoreExtension: f1bc67a4702931a7caa097d8e4ac0a1b0d16720e
   FirebaseCoreInternal: d98ab91e2d80a56d7b246856a8885443b302c0c2
   FirebaseFirestore: 2ccdf893fd7e175aa8ec58faa06338b346d27db8
   FirebaseFirestoreInternal: 004452c4669d5df8869c9f8f7a24ee0009852d5b
   FirebaseSharedSwift: a4e5dfca3e210633bb3a3dfb94176c019211948b
+  FirebaseStorage: 1bf8f80ac3bb02c72844b7350e95e10be7113ef0
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  flutter_sound: 7c797c81917a962510b0d187a3323ae78efbf5eb
+  flutter_sound_core: d530b4031479967b66d37cab067547739f1e1910
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   "gRPC-C++": 2fa52b3141e7789a28a737f251e0c45b4cb20a87
   gRPC-Core: a27c294d6149e1c39a7d173527119cfbc3375ce4
+  GTMSessionFetcher: 923b710231ad3d6f3f0495ac1ced35421e07d9a6
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
 
-PODFILE CHECKSUM: 1959d098c91d8a792531a723c4a9d7e9f6a01e38
+PODFILE CHECKSUM: 6497c13021762e349e844e2d91bba182ae306f57
 
 COCOAPODS: 1.16.2
