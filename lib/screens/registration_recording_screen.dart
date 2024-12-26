@@ -71,7 +71,7 @@ class RegistrationRecordingScreen extends StatelessWidget {
     return null;
   }
 
-  Widget? _getPasswordContent(String recordingTitle) {
+  Widget? _getIndividualPasswordContent(String recordingTitle) {
     if (recordingTitle == 'Hasło #1' ||
         recordingTitle == 'Hasło #2' ||
         recordingTitle == 'Hasło #3') {
@@ -126,24 +126,98 @@ class RegistrationRecordingScreen extends StatelessWidget {
     return null;
   }
 
-  List<String> _getSharedPasswordContent() {
-    return [
-      'Hasło 1: "bezpieczeństwo"',
-      'Hasło 2: "szyfrowanie"',
-      'Hasło 3: "autoryzacja"',
-      'Liczba główna: 123456',
-      'Liczba pomocnicza: 654321'
-    ];
+  Widget? _getSharedPasswordContent(String recordingTitle) {
+    if (recordingTitle == 'Hasło współdzielone #1') {
+      return const Text(
+        'AUTORYZACJA',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        textAlign: TextAlign.center,
+      );
+    } else if (recordingTitle == 'Hasło współdzielone #2') {
+      return const Text(
+        'SZYFROWANIE',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        textAlign: TextAlign.center,
+      );
+    } else if (recordingTitle == 'Hasło współdzielone #3') {
+      return const Text(
+        'BEZPIECZEŃSTWO',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        textAlign: TextAlign.center,
+      );
+    } else if (recordingTitle == 'Hasło współdzielone #4') {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Text(
+            '123456',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8),
+          Text(
+            '(Podaj cyfry pojedynczo i w kolejności, np.: "jeden, dwa, trzy, cztery, pięć, sześć")',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    } else if (recordingTitle == 'Hasło współdzielone #5') {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Text(
+            '654321',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8),
+          Text(
+            '(Podaj cyfry pojedynczo i w kolejności, np.: "sześć, pięć, cztery, trzy, dwa, jeden")',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final instruction = _getInstruction(recordingType, recordingTitle);
     final readingText = _getReadingText(recordingType, recordingTitle);
-    final sharedPasswords =
-        recordingType == 'sharedPassword' ? _getSharedPasswordContent() : null;
-    final passwordContent = recordingType == 'individualPassword'
-        ? _getPasswordContent(recordingTitle)
+    final individualPasswordContent = recordingType == 'individualPassword'
+        ? _getIndividualPasswordContent(recordingTitle)
+        : null;
+    final sharedPasswordContent = recordingType == 'sharedPassword'
+        ? _getSharedPasswordContent(recordingTitle)
         : null;
 
     return Scaffold(
@@ -205,31 +279,21 @@ class RegistrationRecordingScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (passwordContent != null)
-                    Expanded(
-                      child: Center(
-                        child: passwordContent,
-                      ),
-                    ),
-                  if (sharedPasswords != null)
+                  if (individualPasswordContent != null)
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: sharedPasswords.map((password) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4.0),
-                              child: Text(
-                                password,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                        child: Center(
+                          child: individualPasswordContent,
+                        ),
+                      ),
+                    ),
+                  if (sharedPasswordContent != null)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Center(
+                          child: sharedPasswordContent,
                         ),
                       ),
                     ),
