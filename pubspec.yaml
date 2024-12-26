@@ -21,6 +21,7 @@ dependencies:
   intl: ^0.20.1
   flutter_sound: ^9.17.8
   audio_session: ^0.1.23
+  audio_waveforms: ^1.2.0
 
 dev_dependencies:
   flutter_test:
