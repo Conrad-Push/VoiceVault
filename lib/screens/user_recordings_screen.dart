@@ -225,7 +225,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                 builder: (context) => RegistrationRecordingScreen(
                   userId: context.read<UserProvider>().userId!,
                   recordingType: recordingType,
-                  fileName: recording['title'],
+                  recordingTitle: recording['title'],
                 ),
               ),
             );
