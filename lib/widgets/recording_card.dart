@@ -4,9 +4,10 @@ import '../utils/constants.dart';
 class RecordingCard extends StatefulWidget {
   final String title;
   final String subtitle;
-  final String? duration; // Czas może być null
+  final String? duration;
   final bool isRecorded;
   final VoidCallback? onDelete;
+  final VoidCallback? onRecord;
 
   const RecordingCard({
     super.key,
@@ -15,6 +16,7 @@ class RecordingCard extends StatefulWidget {
     this.duration,
     required this.isRecorded,
     this.onDelete,
+    this.onRecord,
   });
 
   @override
@@ -26,31 +28,10 @@ class _RecordingCardState extends State<RecordingCard> {
   bool _isFullyExpanded = false;
 
   void _toggleExpansion() {
-    if (_isExpanded) {
-      // Przy zwijaniu najpierw zmniejszamy opacity
-      setState(() {
-        _isFullyExpanded = false;
-      });
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          setState(() {
-            _isExpanded = false;
-          });
-        }
-      });
-    } else {
-      // Przy rozwijaniu najpierw zwiększamy wysokość
-      setState(() {
-        _isExpanded = true;
-      });
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          setState(() {
-            _isFullyExpanded = true;
-          });
-        }
-      });
-    }
+    setState(() {
+      _isExpanded = !_isExpanded;
+      _isFullyExpanded = _isExpanded;
+    });
   }
 
   @override
@@ -95,16 +76,17 @@ class _RecordingCardState extends State<RecordingCard> {
                           color: Colors.grey,
                         ),
                       ),
-                      if (widget.duration != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.duration!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
+                      if (widget.duration != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            widget.duration!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
-                      ],
                     ],
                   ),
                 ),
@@ -120,12 +102,10 @@ class _RecordingCardState extends State<RecordingCard> {
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               child: SizedBox(
-                height:
-                    _isExpanded ? 60 : 0, // Stała wysokość rozwiniętej sekcji
+                height: _isExpanded ? 60 : 0,
                 child: AnimatedOpacity(
                   opacity: _isFullyExpanded ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeInOut,
                   child: Center(
                     child: widget.isRecorded
                         ? Row(
@@ -143,12 +123,10 @@ class _RecordingCardState extends State<RecordingCard> {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
-                                onPressed: () {
-                                  debugPrint('Re-recording sample');
-                                },
+                                onPressed: widget.onRecord,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
-                                      Color(0xFFFFA726), // Kolor pomarańczowy
+                                      const Color(0xFFFFA726), // Pomarańczowy
                                 ),
                                 child: const Text(
                                   'Nagraj ponownie',
@@ -158,9 +136,7 @@ class _RecordingCardState extends State<RecordingCard> {
                             ],
                           )
                         : ElevatedButton(
-                            onPressed: () {
-                              debugPrint('Start recording');
-                            },
+                            onPressed: widget.onRecord,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                             ),

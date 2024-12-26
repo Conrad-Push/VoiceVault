@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
           icon: Icons.wifi_off,
           iconColor: Colors.red,
-          closeButtonLabel: 'Zamknij',
+          closeButtonLabel: 'OK',
           onClosePressed: () => Navigator.of(context).pop(),
         );
       },

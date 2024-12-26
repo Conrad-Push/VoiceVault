@@ -120,7 +120,7 @@ class UsersList extends StatelessWidget {
               'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
           icon: Icons.wifi_off,
           iconColor: Colors.red,
-          closeButtonLabel: 'Zamknij',
+          closeButtonLabel: 'OK',
           onClosePressed: () => Navigator.of(context).pop(),
         );
       },

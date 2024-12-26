@@ -28,7 +28,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
     final isConnected = context.read<ConnectivityProvider>().isConnected;
 
     if (!isConnected) {
-      _showNoConnectionModal();
+      _showNoConnectionModal(context);
       return;
     }
 
@@ -64,7 +64,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
     }
   }
 
-  void _showNoConnectionModal() {
+  void _showNoConnectionModal(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -75,11 +75,8 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
               'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
           icon: Icons.wifi_off,
           iconColor: Colors.red,
-          iconSize: 48.0,
-          closeButtonLabel: 'Zamknij',
-          onClosePressed: () {
-            Navigator.of(context).pop();
-          },
+          closeButtonLabel: 'OK',
+          onClosePressed: () => Navigator.of(context).pop(),
         );
       },
     );

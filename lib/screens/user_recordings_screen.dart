@@ -12,6 +12,7 @@ import '../widgets/custom_button.dart';
 import '../widgets/recording_card.dart';
 import '../providers/user_provider.dart';
 import '../services/firebase/firestore_service.dart';
+import 'registration_recording_screen.dart';
 
 class UserRecordingsScreen extends StatefulWidget {
   const UserRecordingsScreen({super.key});
@@ -30,7 +31,6 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Dodanie minimalnego czasu wyświetlania loadera
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
         setState(() {
@@ -86,9 +86,25 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
           icon: Icons.error,
           iconColor: Colors.red,
           closeButtonLabel: 'OK',
-          onClosePressed: () {
-            Navigator.of(context).pop();
-          },
+          onClosePressed: () => Navigator.of(context).pop(),
+        );
+      },
+    );
+  }
+
+  void _showNoConnectionModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Problem z siecią',
+          description:
+              'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
+          icon: Icons.wifi_off,
+          iconColor: Colors.red,
+          closeButtonLabel: 'OK',
+          onClosePressed: () => Navigator.of(context).pop(),
         );
       },
     );
@@ -128,20 +144,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                     isCheckingConnection = false;
                   });
 
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return CustomModal(
-                        title: 'Brak połączenia',
-                        description:
-                            'Nie można usunąć nagrania bez dostępu do Internetu.',
-                        icon: Icons.wifi_off,
-                        iconColor: Colors.red,
-                        closeButtonLabel: 'OK',
-                        onClosePressed: () => Navigator.of(context).pop(),
-                      );
-                    },
-                  );
+                  _showNoConnectionModal(context);
                   return;
                 }
 
@@ -178,7 +181,8 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
   }
 
   List<Widget> _buildSection(
-      String title, List<Map<String, dynamic>> recordings) {
+      String title, List<Map<String, dynamic>> recordings,
+      {required String recordingType}) {
     return [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -202,14 +206,22 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
               : null,
           isRecorded: recording['isRecorded'],
           onDelete: recording['isRecorded']
-              ? () {
-                  final userId = context.read<UserProvider>().userId;
-                  if (userId != null) {
-                    _showDeleteRecordingModal(
-                        context, userId, recording['title']);
-                  }
-                }
+              ? () => _showDeleteRecordingModal(
+                    context,
+                    context.read<UserProvider>().userId!,
+                    recording['title'],
+                  )
               : null,
+          onRecord: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RegistrationRecordingScreen(
+                userId: context.read<UserProvider>().userId!,
+                recordingType: recordingType,
+                fileName: recording['title'],
+              ),
+            ),
+          ),
         );
       }),
     ];
@@ -238,32 +250,12 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                 builder: (context, snapshot) {
                   if (_showLoader ||
                       snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text(
-                            'Ładowanie nagrań...',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Błąd podczas pobierania nagrań',
-                        style: const TextStyle(fontSize: 16, color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
+                    _showErrorModal(snapshot.error.toString());
+                    return const SizedBox();
                   }
 
                   final recordings = snapshot.data ??
@@ -277,13 +269,22 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                     child: Column(
                       children: [
                         ..._buildSection(
-                            'Próbki głosu', recordings['individualSamples']!),
+                          'Próbki głosu',
+                          recordings['individualSamples']!,
+                          recordingType: 'individualSamples',
+                        ),
                         const SizedBox(height: 16),
-                        ..._buildSection('Hasła indywidualne',
-                            recordings['individualPasswords']!),
+                        ..._buildSection(
+                          'Hasła indywidualne',
+                          recordings['individualPasswords']!,
+                          recordingType: 'individualPasswords',
+                        ),
                         const SizedBox(height: 16),
-                        ..._buildSection('Hasła współdzielone',
-                            recordings['sharedPasswords']!),
+                        ..._buildSection(
+                          'Hasła współdzielone',
+                          recordings['sharedPasswords']!,
+                          recordingType: 'sharedPasswords',
+                        ),
                       ],
                     ),
                   );
@@ -295,9 +296,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: CustomButton(
                 label: 'Powrót do listy',
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 color: Colors.red,
               ),
             ),
