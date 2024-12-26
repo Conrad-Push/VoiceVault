@@ -279,19 +279,19 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                         ..._buildSection(
                           'Próbki głosu',
                           recordings['individualSamples']!,
-                          recordingType: 'individualSamples',
+                          recordingType: 'individualSample',
                         ),
                         const SizedBox(height: 16),
                         ..._buildSection(
                           'Hasła indywidualne',
                           recordings['individualPasswords']!,
-                          recordingType: 'individualPasswords',
+                          recordingType: 'individualPassword',
                         ),
                         const SizedBox(height: 16),
                         ..._buildSection(
                           'Hasła współdzielone',
                           recordings['sharedPasswords']!,
-                          recordingType: 'sharedPasswords',
+                          recordingType: 'sharedPassword',
                         ),
                       ],
                     ),
