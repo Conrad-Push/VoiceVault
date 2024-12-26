@@ -1,9 +1,9 @@
 import 'package:permission_handler/permission_handler.dart';
 
-class PermissionService {
-  PermissionService._privateConstructor();
-  static final PermissionService instance =
-      PermissionService._privateConstructor();
+class PermissionsService {
+  PermissionsService._privateConstructor();
+  static final PermissionsService instance =
+      PermissionsService._privateConstructor();
 
   Future<bool> requestMicrophonePermission() async {
     final status = await Permission.microphone.request();
