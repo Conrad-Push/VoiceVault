@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/firebase/firestore_service.dart'; // Zmiana importu na FirestoreService
+import '../services/firebase/firestore_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/network_status_banner.dart';
 import '../widgets/screen_title.dart';
@@ -132,74 +132,76 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const NetworkStatusBanner(),
-            const ScreenTitle(title: AppTexts.registrationTitle),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Form(
-                key: _formKey,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const NetworkStatusBanner(),
+              const ScreenTitle(title: AppTexts.registrationTitle),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      CustomTextField(
+                        label: AppTexts.nameLabel,
+                        helperText: AppTexts.nameHelperText,
+                        validator: Validators.validateRequired,
+                        onSaved: (value) {
+                          _name = value;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: AppTexts.emailLabel,
+                        helperText: AppTexts.emailHelperText,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) => Validators.validateEmail(value,
+                            dynamicError: _emailError),
+                        onChanged: (value) {
+                          setState(() {
+                            _email = value;
+                            _emailError = null;
+                          });
+
+                          _formKey.currentState?.validate();
+                        },
+                        onSaved: (value) {
+                          _email = value;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CustomTextField(
-                      label: AppTexts.nameLabel,
-                      helperText: AppTexts.nameHelperText,
-                      validator: Validators.validateRequired,
-                      onSaved: (value) {
-                        _name = value;
-                      },
+                    CustomButton(
+                      label: AppTexts.registerButton,
+                      onPressed: _submitForm,
+                      color: AppColors.primary,
                     ),
                     const SizedBox(height: 16),
-                    CustomTextField(
-                      label: AppTexts.emailLabel,
-                      helperText: AppTexts.emailHelperText,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) => Validators.validateEmail(value,
-                          dynamicError: _emailError),
-                      onChanged: (value) {
-                        setState(() {
-                          _email = value;
-                          _emailError = null;
-                        });
-
-                        _formKey.currentState?.validate();
+                    CustomButton(
+                      label: AppTexts.cancelButton,
+                      onPressed: () {
+                        Navigator.pop(context);
                       },
-                      onSaved: (value) {
-                        _email = value;
-                      },
+                      color: AppColors.error,
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CustomButton(
-                    label: AppTexts.registerButton,
-                    onPressed: _submitForm,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomButton(
-                    label: AppTexts.cancelButton,
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    color: AppColors.error,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
