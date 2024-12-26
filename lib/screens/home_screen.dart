@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../services/permissions_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/users_list.dart';
 import '../widgets/custom_button.dart';
@@ -28,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _requestPermissions();
     _fetchUsers();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,6 +44,57 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _requestPermissions() async {
+    try {
+      final microphoneStatus = await Permission.microphone.status;
+
+      if (microphoneStatus.isGranted) {
+        debugPrint("Microphone permission already granted.");
+        return;
+      }
+
+      if (microphoneStatus.isDenied) {
+        final newStatus =
+            await PermissionsService.instance.requestMicrophonePermission();
+
+        if (!newStatus) {
+          _showPermissionDeniedModal();
+        }
+        return;
+      }
+
+      if (microphoneStatus.isPermanentlyDenied) {
+        _showPermissionDeniedModal();
+      }
+    } catch (e) {
+      debugPrint("Error requesting permissions: $e");
+    }
+  }
+
+  void _showPermissionDeniedModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Dostęp do mikrofonu',
+          description:
+              'Aby aplikacja działała poprawnie, wymagany jest dostęp do mikrofonu. Możesz nadać dostęp w ustawieniach aplikacji.',
+          icon: Icons.mic_off,
+          iconColor: Colors.red,
+          closeButtonLabel: 'Anuluj',
+          onClosePressed: () => Navigator.of(context).pop(),
+          actionButtonLabel: 'Ustawienia',
+          actionButtonColor: Colors.blue,
+          onActionPressed: () {
+            Navigator.of(context).pop();
+            openAppSettings(); // Funkcja otwiera ustawienia aplikacji
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -51,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
         ModalRoute.of(context)?.isCurrent == true) {
+      _requestPermissions(); // Ponowne sprawdzanie uprawnień
       _fetchUsers();
       _clearUserRecordingsProvider();
     }
