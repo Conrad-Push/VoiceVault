@@ -82,7 +82,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
         return CustomModal(
           title: 'Błąd',
           description:
-              'Nie udało się usunąć nagrania. Szczegóły: $errorMessage',
+              'Nie udało się wykonać operacji. Szczegóły: $errorMessage',
           icon: Icons.error,
           iconColor: Colors.red,
           closeButtonLabel: 'OK',
@@ -212,16 +212,24 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                     recording['title'],
                   )
               : null,
-          onRecord: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RegistrationRecordingScreen(
-                userId: context.read<UserProvider>().userId!,
-                recordingType: recordingType,
-                fileName: recording['title'],
+          onRecord: () {
+            final isConnected =
+                context.read<ConnectivityProvider>().isConnected;
+            if (!isConnected) {
+              _showNoConnectionModal(context);
+              return;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RegistrationRecordingScreen(
+                  userId: context.read<UserProvider>().userId!,
+                  recordingType: recordingType,
+                  fileName: recording['title'],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       }),
     ];
