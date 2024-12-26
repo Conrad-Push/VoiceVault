@@ -17,6 +17,7 @@ dependencies:
   connectivity_plus: ^6.1.1
   path_provider: ^2.1.5
   provider: ^6.1.2
+  permission_handler: ^11.3.1
   intl: ^0.20.1
   flutter_sound: ^9.17.8
   audio_session: ^0.1.23
