@@ -49,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final microphoneStatus = await Permission.microphone.status;
 
       if (microphoneStatus.isGranted) {
-        debugPrint("Microphone permission already granted.");
         return;
       }
 
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _showPermissionDeniedModal();
       }
     } catch (e) {
-      debugPrint("Error requesting permissions: $e");
+      debugPrint("Error requesting microphone permission: $e");
     }
   }
 
@@ -88,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           actionButtonColor: Colors.blue,
           onActionPressed: () {
             Navigator.of(context).pop();
-            openAppSettings(); // Funkcja otwiera ustawienia aplikacji
+            openAppSettings();
           },
         );
       },
@@ -105,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
         ModalRoute.of(context)?.isCurrent == true) {
-      _requestPermissions(); // Ponowne sprawdzanie uprawnień
+      _requestPermissions();
       _fetchUsers();
       _clearUserRecordingsProvider();
     }
@@ -132,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
           icon: Icons.wifi_off,
           iconColor: Colors.red,
-          closeButtonLabel: 'Zamknij',
+          closeButtonLabel: 'OK',
           onClosePressed: () => Navigator.of(context).pop(),
         );
       },
@@ -169,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   return UsersList(
                     users: snapshot.data,
                     onUserDeleted: _fetchUsers,
-                    onReturn: _fetchUsers, // Callback wywoływany po powrocie
+                    onReturn: _fetchUsers,
                   );
                 },
               ),

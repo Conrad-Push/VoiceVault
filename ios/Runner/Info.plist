@@ -46,6 +46,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Wymagamy dostępu do mikrofonu, ze względu na potrzebę działania systemu.</string>
+	<string>Dostęp do mikrofonu jest wymagany, ze względu na potrzebę działania systemu.</string>
 </dict>
 </plist>
