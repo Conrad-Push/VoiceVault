@@ -13,9 +13,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^3.9.0
   cloud_firestore: ^5.6.0
+  firebase_storage: ^12.3.7
   connectivity_plus: ^6.1.1
+  path_provider: ^2.1.5
   provider: ^6.1.2
   intl: ^0.20.1
+  flutter_sound: ^9.17.8
+  audio_session: ^0.1.23
 
 dev_dependencies:
   flutter_test:

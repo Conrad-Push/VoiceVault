@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'logging_service.dart';
+import '../logging_service.dart';
 
 class FirebaseCoreService {
   FirebaseCoreService._privateConstructor();
