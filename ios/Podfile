@@ -47,6 +47,7 @@ post_install do |installer|
         
         ## Uprawnienia, które chcesz włączyć
         'PERMISSION_MICROPHONE=1', # Włącza uprawnienia do mikrofonu
+        'PERMISSION_MEDIA_LIBRARY=1', # Dostęp do biblioteki mediów
         'PERMISSION_CAMERA=0', # Wyłącz kamerę, jeśli nie jest potrzebna
         'PERMISSION_PHOTOS=0', # Wyłącz galerię zdjęć, jeśli nie jest potrzebna
         'PERMISSION_NOTIFICATIONS=0' # Wyłącz powiadomienia, jeśli nie są potrzebne
