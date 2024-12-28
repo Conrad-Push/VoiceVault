@@ -110,32 +110,37 @@ class _RegistrationRecordingScreenState
                     Expanded(flex: 2, child: _buildContent()),
                     Expanded(
                       flex: 1,
-                      child: AdvancedAudioRecorder(filePath: _filePath!),
+                      child: _filePath == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : AdvancedAudioRecorder(filePath: _filePath!),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _showCancelModal(context),
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: const Text('Anuluj',
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                  SizedBox(width: MediaQuery.of(context).size.width * 0.15),
-                  ElevatedButton(
-                    onPressed: null,
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-                    child: const Text('Dalej',
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _showCancelModal(context),
+                      style:
+                          ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text('Anuluj',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.15),
+                    ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey),
+                      child: const Text('Dalej',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              )
             ],
           ),
         ),
@@ -146,10 +151,11 @@ class _RegistrationRecordingScreenState
   @override
   void dispose() async {
     super.dispose();
-    if (_filePath != null &&
-        await LocalFileService.instance.fileExists(_filePath!)) {
+    if (_filePath != null) {
       try {
-        await LocalFileService.instance.deleteFile(_filePath!);
+        if (await LocalFileService.instance.fileExists(_filePath!)) {
+          await LocalFileService.instance.deleteFile(_filePath!);
+        }
       } catch (e) {
         debugPrint('Error deleting temporary file: $e');
       }

@@ -1,25 +1,29 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import '../../services/audio_service.dart';
 
-class AudioPlayer extends StatefulWidget {
+class AppAudioPlayer extends StatefulWidget {
   final String filePath;
   final VoidCallback onRecordAgain;
 
-  const AudioPlayer({
+  const AppAudioPlayer({
     super.key,
     required this.filePath,
     required this.onRecordAgain,
   });
 
   @override
-  State<AudioPlayer> createState() => _AudioPlayerState();
+  State<AppAudioPlayer> createState() => _AudioPlayerState();
 }
 
-class _AudioPlayerState extends State<AudioPlayer> {
+class _AudioPlayerState extends State<AppAudioPlayer> {
   final AudioService _audioService = AudioService();
-  bool _isPlaying = false;
-  final Duration _currentPosition = Duration.zero;
-  Duration _totalDuration = Duration.zero;
+  late StreamSubscription<Duration> _positionSubscription;
+  late StreamSubscription<Duration?> _durationSubscription;
+  late StreamSubscription<dynamic> _playerStateSubscription;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
 
   @override
   void initState() {
@@ -28,29 +32,37 @@ class _AudioPlayerState extends State<AudioPlayer> {
   }
 
   Future<void> _initializePlayer() async {
-    await _audioService.initPlayer();
-    setState(() {
-      _totalDuration =
-          Duration.zero; // Możemy zainicjować na 0, jeśli brak danych
-    });
-  }
+    await _audioService.initPlayer(widget.filePath);
 
-  Future<void> _playPause() async {
-    if (_isPlaying) {
-      await _audioService.stopPlayback();
-    } else {
-      await _audioService.playRecording(
-        widget.filePath,
-        whenFinished: () => setState(() => _isPlaying = false),
-      );
-    }
-    setState(() => _isPlaying = !_isPlaying);
+    _positionSubscription = _audioService.positionStream.listen((position) {
+      setState(() => _position = position);
+    });
+
+    _durationSubscription = _audioService.durationStream.listen((duration) {
+      if (duration != null) {
+        setState(() => _duration = duration);
+      }
+    });
+
+    _playerStateSubscription = _audioService.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        setState(() => _position = Duration.zero);
+        _audioService.stop();
+        _audioService.seek(_position);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _audioService.dispose();
-    super.dispose();
+    try {
+      _positionSubscription.cancel();
+      _durationSubscription.cancel();
+      _playerStateSubscription.cancel();
+    } finally {
+      _audioService.dispose();
+      super.dispose();
+    }
   }
 
   @override
@@ -64,23 +76,21 @@ class _AudioPlayerState extends State<AudioPlayer> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _formatDuration(_currentPosition),
+                _formatDuration(_position),
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
               Text(
-                _formatDuration(_totalDuration),
+                _formatDuration(_duration),
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
             ],
           ),
           Slider(
-            value: _currentPosition.inSeconds.toDouble(),
-            max: _totalDuration.inSeconds.toDouble() > 0
-                ? _totalDuration.inSeconds.toDouble()
-                : 1.0,
+            min: 0.0,
+            max: _duration.inSeconds.toDouble(),
+            value: _position.inSeconds.toDouble(),
             onChanged: (value) async {
-              final newPosition = Duration(seconds: value.toInt());
-              await _audioService.seekToPosition(newPosition);
+              await _audioService.seek(Duration(seconds: value.toInt()));
             },
           ),
           const SizedBox(height: 16),
@@ -88,10 +98,10 @@ class _AudioPlayerState extends State<AudioPlayer> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               ElevatedButton(
-                onPressed: _playPause,
+                onPressed: () => _audioService.playPause(),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                 child: Icon(
-                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                  _audioService.isPlaying ? Icons.pause : Icons.play_arrow,
                   size: 24,
                   color: Colors.white,
                 ),
@@ -112,8 +122,8 @@ class _AudioPlayerState extends State<AudioPlayer> {
   }
 
   String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }

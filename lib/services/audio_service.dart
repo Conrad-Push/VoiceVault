@@ -1,17 +1,22 @@
-import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_sound/flutter_sound.dart' as f_s;
+import 'package:just_audio/just_audio.dart' as j_a;
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 
 class AudioService {
-  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  final FlutterSoundPlayer _player = FlutterSoundPlayer();
+  final f_s.FlutterSoundRecorder _recorder = f_s.FlutterSoundRecorder();
+  final j_a.AudioPlayer _player = j_a.AudioPlayer();
 
   /// Statusy
   bool get isRecording => _recorder.isRecording;
-  bool get isInitialized => _recorder.isRecording || _recorder.isStopped;
-  bool get isPlaying => _player.isPlaying;
+  bool get isPlaying => _player.playing;
 
-  /// Inicjalizuje tylko recorder
+  /// Strumienie
+  Stream<Duration> get positionStream => _player.positionStream;
+  Stream<Duration?> get durationStream => _player.durationStream;
+  Stream<j_a.PlayerState> get playerStateStream => _player.playerStateStream;
+
+  /// Inicjalizuje recorder
   Future<void> initRecorder() async {
     try {
       await _recorder.openRecorder();
@@ -30,40 +35,23 @@ class AudioService {
       debugPrint('Recorder initialized');
     } catch (e) {
       debugPrint('Error initializing recorder: $e');
-      throw Exception('Failed to initialize recorder: $e');
-    }
-  }
-
-  /// Inicjalizuje tylko player
-  Future<void> initPlayer() async {
-    try {
-      await _player.openPlayer();
-      debugPrint('Player initialized');
-    } catch (e) {
-      debugPrint('Error initializing player: $e');
-      throw Exception('Failed to initialize player: $e');
+      throw Exception('Failed to initialize recorder');
     }
   }
 
   /// Rozpoczyna nagrywanie
   Future<void> startRecording(String filePath) async {
-    if (!isInitialized) {
-      throw Exception('Recorder is not initialized');
-    }
-    if (isRecording) {
-      throw Exception('Recording is already in progress');
-    }
     try {
       await _recorder.startRecorder(
         toFile: filePath,
-        codec: Codec.pcm16WAV,
+        codec: f_s.Codec.pcm16WAV,
         sampleRate: 44100,
         numChannels: 1,
       );
       debugPrint('Recording started. Saving to: $filePath');
     } catch (e) {
       debugPrint('Error starting recording: $e');
-      throw Exception('Failed to start recording: $e');
+      throw Exception('Failed to start recording');
     }
   }
 
@@ -71,6 +59,7 @@ class AudioService {
   Future<String?> stopRecording() async {
     try {
       final path = await _recorder.stopRecorder();
+      debugPrint('Recording stopped. Saved to: $path');
       return path;
     } catch (e) {
       debugPrint('Error stopping recording: $e');
@@ -78,43 +67,51 @@ class AudioService {
     }
   }
 
-  /// Odtwarza nagranie
-  Future<void> playRecording(String filePath,
-      {VoidCallback? whenFinished}) async {
-    if (_player.isPlaying) {
-      throw Exception('Audio is already playing');
-    }
-
+  /// Inicjalizuje player
+  Future<void> initPlayer(String filePath) async {
     try {
-      await _player.startPlayer(
-        fromURI: filePath,
-        codec: Codec.pcm16WAV,
-        whenFinished: whenFinished,
-      );
+      await _player.setFilePath(filePath);
+      debugPrint('Player initialized with file: $filePath');
     } catch (e) {
-      debugPrint('Error playing recording: $e');
-      throw Exception('Failed to play recording: $e');
+      debugPrint('Error initializing player: $e');
+      throw Exception('Failed to initialize player');
     }
   }
 
-  /// Zatrzymuje odtwarzanie
-  Future<void> stopPlayback() async {
+  /// Odtwarza lub pauzuje nagranie
+  Future<void> playPause() async {
     try {
-      if (_player.isPlaying) {
-        await _player.stopPlayer();
+      if (_player.playing) {
+        await _player.pause();
+        debugPrint('Playback paused');
+      } else {
+        await _player.play();
+        debugPrint('Playback started');
       }
     } catch (e) {
-      debugPrint('Error stopping playback: $e');
+      debugPrint('Error during play/pause: $e');
+      throw Exception('Failed to play or pause');
     }
   }
 
-  /// Ustawia pozycję odtwarzania
-  Future<void> seekToPosition(Duration position) async {
+  /// Stopuje odtwarzacz
+  Future<void> stop() async {
     try {
-      await _player.seekToPlayer(position);
-      debugPrint('Seeked to position: ${position.inSeconds} seconds');
+      await _player.stop();
+      debugPrint('Player stopped');
+    } catch (e) {
+      debugPrint('Error stopping player: $e');
+    }
+  }
+
+  /// Przewija do pozycji
+  Future<void> seek(Duration position) async {
+    try {
+      await _player.seek(position);
+      debugPrint('Seeked to position: $position');
     } catch (e) {
       debugPrint('Error seeking to position: $e');
+      throw Exception('Failed to seek position');
     }
   }
 
@@ -125,12 +122,13 @@ class AudioService {
         await stopRecording();
       }
       if (isPlaying) {
-        await stopPlayback();
+        await stop();
       }
       await _recorder.closeRecorder();
-      await _player.closePlayer();
+      await _player.dispose();
+      debugPrint('Resources disposed');
     } catch (e) {
-      debugPrint('Error disposing audio service: $e');
+      debugPrint('Error disposing resources: $e');
     }
   }
 }

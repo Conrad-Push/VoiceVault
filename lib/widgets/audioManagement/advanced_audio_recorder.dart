@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/local_file_service.dart';
-import 'audio_player.dart';
-import 'audio_recorder.dart';
+import 'app_audio_player.dart';
+import 'app_audio_recorder.dart';
 
 class AdvancedAudioRecorder extends StatefulWidget {
   final String filePath;
@@ -66,11 +66,11 @@ class _AdvancedAudioRecorderState extends State<AdvancedAudioRecorder> {
           }
 
           return snapshot.data == true
-              ? AudioPlayer(
+              ? AppAudioPlayer(
                   filePath: widget.filePath,
                   onRecordAgain: _handleRecordAgain,
                 )
-              : AudioRecorder(
+              : AppAudioRecorder(
                   filePath: widget.filePath,
                   onRecordingComplete: _onRecordingComplete,
                 );

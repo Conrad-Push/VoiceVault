@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import '../../services/audio_service.dart';
 
-class AudioRecorder extends StatefulWidget {
+class AppAudioRecorder extends StatefulWidget {
   final String filePath;
   final VoidCallback onRecordingComplete;
 
-  const AudioRecorder({
+  const AppAudioRecorder({
     super.key,
     required this.filePath,
     required this.onRecordingComplete,
   });
 
   @override
-  State<AudioRecorder> createState() => _AudioRecorderState();
+  State<AppAudioRecorder> createState() => _AudioRecorderState();
 }
 
-class _AudioRecorderState extends State<AudioRecorder> {
+class _AudioRecorderState extends State<AppAudioRecorder> {
   bool _isRecording = false;
   final AudioService _audioService = AudioService();
   late final RecorderController _waveformController;
