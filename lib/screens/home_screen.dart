@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/permissions_service.dart';
-import '../widgets/app_header.dart';
-import '../widgets/users_list.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/screen_title.dart';
-import '../widgets/network_status_banner.dart';
-import '../widgets/custom_modal.dart';
+import '../widgets/interfaceElements/app_header.dart';
+import '../widgets/lists/users_list.dart';
+import '../widgets/interfaceElements/custom_button.dart';
+import '../widgets/interfaceElements/screen_title.dart';
+import '../widgets/connectionStatus/network_status_banner.dart';
+import '../widgets/interfaceElements/custom_modal.dart';
 import 'user_registration_screen.dart';
 import '../utils/constants.dart';
 import '../services/firebase/firestore_service.dart';
@@ -14,7 +14,7 @@ import '../models/user_model.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/user_provider.dart';
-import '../widgets/connection_icon.dart';
+import '../widgets/connectionStatus/connection_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -141,9 +141,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppHeader(
+      appBar: const AppHeader(
         title: 'Voice Vault',
-        trailing: const ConnectionIcon(),
+        trailing: ConnectionIcon(),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(

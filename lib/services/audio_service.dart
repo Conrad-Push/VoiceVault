@@ -41,7 +41,8 @@ class AudioService {
   }
 
   /// Rozpoczyna nagrywanie
-  Future<String> startRecording(String userId, String fileName) async {
+  Future<String> startRecording(
+      String userId, String recordingType, String recordingTitle) async {
     if (!isInitialized) {
       throw Exception('Recorder is not initialized');
     }
@@ -50,7 +51,8 @@ class AudioService {
       throw Exception('Recording is already in progress');
     }
 
-    final filePath = await _fileService.createFilePath(userId, fileName);
+    final filePath = await _fileService.createFilePath(
+        userId, recordingType, recordingTitle);
 
     try {
       await _recorder.startRecorder(

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
-import '../services/firebase/firestore_service.dart';
-import 'user_card.dart';
-import '../widgets/custom_modal.dart';
+import '../../models/user_model.dart';
+import '../../services/firebase/firestore_service.dart';
+import '../cards/user_card.dart';
+import '../interfaceElements/custom_modal.dart';
 import 'package:provider/provider.dart';
-import '../providers/connectivity_provider.dart';
-import '../providers/user_provider.dart';
-import '../screens/user_recordings_screen.dart';
+import '../../providers/connectivity_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../screens/user_recordings_screen.dart';
 
 class UsersList extends StatelessWidget {
   final List<UserModel>? users;

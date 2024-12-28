@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_header.dart';
-import '../widgets/network_status_banner.dart';
-import '../widgets/screen_title.dart';
-import '../widgets/connection_icon.dart';
-import '../widgets/custom_modal.dart';
+import '../widgets/interfaceElements/app_header.dart';
+import '../widgets/connectionStatus/network_status_banner.dart';
+import '../widgets/interfaceElements/screen_title.dart';
+import '../widgets/connectionStatus/connection_icon.dart';
+import '../widgets/interfaceElements/custom_modal.dart';
 import '../utils/constants.dart';
 import '../widgets/registrationContents/individual_sample_content.dart';
 import '../widgets/registrationContents/individual_password_content.dart';
@@ -120,7 +120,7 @@ class RegistrationRecordingScreen extends StatelessWidget {
                         backgroundColor: Colors.grey,
                       ),
                       child: const Text(
-                        'Zapisz',
+                        'Dalej',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),

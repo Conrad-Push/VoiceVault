@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/firebase/firestore_service.dart';
-import '../widgets/app_header.dart';
-import '../widgets/network_status_banner.dart';
-import '../widgets/screen_title.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/custom_modal.dart';
+import '../widgets/interfaceElements/app_header.dart';
+import '../widgets/connectionStatus/connection_icon.dart';
+import '../widgets/connectionStatus/network_status_banner.dart';
+import '../widgets/interfaceElements/screen_title.dart';
+import '../widgets/interfaceElements/custom_button.dart';
+import '../widgets/interfaceElements/custom_text_field.dart';
+import '../widgets/interfaceElements/custom_modal.dart';
 import '../utils/validators.dart';
 import '../utils/constants.dart';
 import '../providers/connectivity_provider.dart';
@@ -127,6 +128,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
       appBar: const AppHeader(
         title: 'Voice Vault',
         automaticallyImplyLeading: false,
+        trailing: ConnectionIcon(),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
