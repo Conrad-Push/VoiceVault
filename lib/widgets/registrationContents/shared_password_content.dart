@@ -101,8 +101,6 @@ class SharedPasswordContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -113,13 +111,16 @@ class SharedPasswordContent extends StatelessWidget {
               color: Colors.black87,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.left,
           ),
         ),
         const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Center(
-            child: _buildContent(),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Center(
+              child: _buildContent(),
+            ),
           ),
         ),
       ],

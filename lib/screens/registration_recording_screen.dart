@@ -5,6 +5,9 @@ import '../widgets/screen_title.dart';
 import '../widgets/connection_icon.dart';
 import '../widgets/custom_modal.dart';
 import '../utils/constants.dart';
+import '../widgets/registrationContents/individual_sample_content.dart';
+import '../widgets/registrationContents/individual_password_content.dart';
+import '../widgets/registrationContents/shared_password_content.dart';
 
 class RegistrationRecordingScreen extends StatelessWidget {
   final String userId;
@@ -42,278 +45,90 @@ class RegistrationRecordingScreen extends StatelessWidget {
     );
   }
 
-  String _getInstruction(String recordingType, String recordingTitle) {
+  Widget _buildContent() {
     switch (recordingType) {
       case 'individualSample':
-        return 'Włącz nagrywanie, a następnie wyraźnie przeczytaj tekst podany poniżej:';
+        return IndividualSampleContent(recordingTitle: recordingTitle);
       case 'individualPassword':
-        return 'Włącz nagrywanie, a następnie wyraźnie wypowiedz wybrane przez siebie hasło, którym będzie:';
+        return IndividualPasswordContent(recordingTitle: recordingTitle);
       case 'sharedPassword':
-        return 'Włącz nagrywanie, a następnie wyraźnie wypowiedz poniżej zdefiniowane hasło:';
+        return SharedPasswordContent(recordingTitle: recordingTitle);
       default:
-        return 'Nieznany typ nagrania. Skontaktuj się z administratorem.';
+        return const Center(child: Text('Nieznany typ nagrania'));
     }
-  }
-
-  String? _getReadingText(String recordingType, String recordingTitle) {
-    if (recordingType == 'individualSample') {
-      switch (recordingTitle) {
-        case 'Próbka #1':
-          return 'To jest tekst dla próbki pierwszej. Należy go przeczytać płynnie i wyraźnie.';
-        case 'Próbka #2':
-          return 'To jest tekst dla próbki drugiej. Zachowaj naturalny rytm mowy.';
-        case 'Próbka #3':
-          return 'To jest tekst dla próbki trzeciej. Prosimy o dokładne przeczytanie.';
-        default:
-          return null;
-      }
-    }
-    return null;
-  }
-
-  Widget? _getIndividualPasswordContent(String recordingTitle) {
-    if (recordingTitle == 'Hasło #1' ||
-        recordingTitle == 'Hasło #2' ||
-        recordingTitle == 'Hasło #3') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            'Dowolne słowo',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 8),
-          Text(
-            '(Składające się z co najmniej 6 liter)',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    } else if (recordingTitle == 'Hasło #4' || recordingTitle == 'Hasło #5') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            'Dowolna liczba',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 8),
-          Text(
-            '(Składająca się z 6 cyfr, podawanych przez Ciebie pojedynczo w kolejności, przykładowo: "zero, trzy, dwa, jeden, osiem, siedem")',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    }
-    return null;
-  }
-
-  Widget? _getSharedPasswordContent(String recordingTitle) {
-    if (recordingTitle == 'Hasło współdzielone #1') {
-      return const Text(
-        'AUTORYZACJA',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-        textAlign: TextAlign.center,
-      );
-    } else if (recordingTitle == 'Hasło współdzielone #2') {
-      return const Text(
-        'SZYFROWANIE',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-        textAlign: TextAlign.center,
-      );
-    } else if (recordingTitle == 'Hasło współdzielone #3') {
-      return const Text(
-        'BEZPIECZEŃSTWO',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-        textAlign: TextAlign.center,
-      );
-    } else if (recordingTitle == 'Hasło współdzielone #4') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            '123456',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 8),
-          Text(
-            '(Podaj cyfry pojedynczo i w kolejności, np.: "jeden, dwa, trzy, cztery, pięć, sześć")',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    } else if (recordingTitle == 'Hasło współdzielone #5') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            '654321',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 8),
-          Text(
-            '(Podaj cyfry pojedynczo i w kolejności, np.: "sześć, pięć, cztery, trzy, dwa, jeden")',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    }
-    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final instruction = _getInstruction(recordingType, recordingTitle);
-    final readingText = _getReadingText(recordingType, recordingTitle);
-    final individualPasswordContent = recordingType == 'individualPassword'
-        ? _getIndividualPasswordContent(recordingTitle)
-        : null;
-    final sharedPasswordContent = recordingType == 'sharedPassword'
-        ? _getSharedPasswordContent(recordingTitle)
-        : null;
-
     return Scaffold(
       appBar: AppHeader(
+        automaticallyImplyLeading: false,
         title: 'Voice Vault',
         trailing: const ConnectionIcon(),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            const NetworkStatusBanner(),
-            ScreenTitle(title: 'Nagrywanie - $recordingTitle'),
-            const SizedBox(height: 16),
-            Expanded(
-              flex: 2,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
-                      instruction,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (readingText != null)
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              const NetworkStatusBanner(),
+              ScreenTitle(title: 'Nagrywanie - $recordingTitle'),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Column(
+                  children: [
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
+                      flex: 2,
+                      child: _buildContent(),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Center(
+                        child: Text(
+                          'Tutaj znajdzie się widget recordera.',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
                           ),
-                          child: Scrollbar(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                readingText,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                  if (individualPasswordContent != null)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Center(
-                          child: individualPasswordContent,
-                        ),
-                      ),
-                    ),
-                  if (sharedPasswordContent != null)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Center(
-                          child: sharedPasswordContent,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: ElevatedButton(
-                onPressed: () => _showCancelModal(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
-                child: const Text(
-                  'Anuluj',
-                  style: TextStyle(color: Colors.white),
+                  ],
                 ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _showCancelModal(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        'Anuluj',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.15),
+                    ElevatedButton(
+                      onPressed: null, // Przycisk na razie nieaktywny
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                      ),
+                      child: const Text(
+                        'Zapisz',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
