@@ -45,9 +45,7 @@ class _RegistrationRecordingScreenState
         widget.recordingType,
         widget.recordingTitle,
       );
-      setState(() {
-        _filePath = filePath;
-      });
+      setState(() => _filePath = filePath);
       debugPrint('File path generated: $filePath');
     } catch (e) {
       debugPrint('Error generating file path: $e');
@@ -58,23 +56,21 @@ class _RegistrationRecordingScreenState
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (BuildContext context) {
-        return CustomModal(
-          title: 'Przerwanie nagrywania',
-          description:
-              'Jeśli opuścisz ekran, cały postęp zostanie utracony. Czy na pewno chcesz kontynuować?',
-          icon: Icons.warning,
-          iconColor: Colors.orange,
-          closeButtonLabel: 'Nie',
-          onClosePressed: () => Navigator.of(context).pop(),
-          actionButtonLabel: 'Tak',
-          actionButtonColor: Colors.red,
-          onActionPressed: () {
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
-          },
-        );
-      },
+      builder: (context) => CustomModal(
+        title: 'Przerwanie nagrywania',
+        description:
+            'Jeśli opuścisz ekran, cały postęp zostanie utracony. Czy na pewno chcesz kontynuować?',
+        icon: Icons.warning,
+        iconColor: Colors.orange,
+        closeButtonLabel: 'Nie',
+        onClosePressed: () => Navigator.of(context).pop(),
+        actionButtonLabel: 'Tak',
+        actionButtonColor: Colors.red,
+        onActionPressed: () {
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        },
+      ),
     );
   }
 
@@ -94,10 +90,10 @@ class _RegistrationRecordingScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppHeader(
+      appBar: const AppHeader(
         automaticallyImplyLeading: false,
         title: 'Voice Vault',
-        trailing: const ConnectionIcon(),
+        trailing: ConnectionIcon(),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -111,12 +107,9 @@ class _RegistrationRecordingScreenState
               Expanded(
                 child: Column(
                   children: [
+                    Expanded(flex: 2, child: _buildContent()),
                     Expanded(
-                      flex: 2, // Treść ekranu zajmuje większą część
-                      child: _buildContent(),
-                    ),
-                    Expanded(
-                      flex: 1, // AdvancedAudioRecorder zajmuje mniejszą część
+                      flex: 1,
                       child: _filePath == null
                           ? const Center(child: CircularProgressIndicator())
                           : AdvancedAudioRecorder(filePath: _filePath!),
@@ -124,34 +117,26 @@ class _RegistrationRecordingScreenState
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => _showCancelModal(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                      ),
-                      child: const Text(
-                        'Anuluj',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.15),
-                    ElevatedButton(
-                      onPressed: null, // Przycisk na razie nieaktywny
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
-                      ),
-                      child: const Text(
-                        'Dalej',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _showCancelModal(context),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text('Anuluj',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.15),
+                  ElevatedButton(
+                    onPressed: null,
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                    child: const Text('Dalej',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
               ),
             ],
           ),
