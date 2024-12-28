@@ -7,7 +7,8 @@ class LocalFileService {
   static final LocalFileService instance =
       LocalFileService._privateConstructor();
 
-  Future<String> createFilePath(String userId, String fileName) async {
+  Future<String> createFilePath(
+      String userId, String recordingType, String recordingTitle) async {
     final directory = await getApplicationDocumentsDirectory();
     final userDirectory = Directory("${directory.path}/$userId");
 
@@ -15,7 +16,19 @@ class LocalFileService {
       await userDirectory.create(recursive: true);
     }
 
+    final fileName = _generateFileName(recordingType, recordingTitle);
     return "${userDirectory.path}/$fileName";
+  }
+
+  String _generateFileName(String recordingType, String recordingTitle) {
+    final formattedType =
+        recordingType[0].toUpperCase() + recordingType.substring(1);
+    final match = RegExp(r'#(\d+)').firstMatch(recordingTitle);
+    if (match == null) {
+      throw Exception('Invalid recordingTitle format: $recordingTitle');
+    }
+    final number = match.group(1);
+    return "$formattedType$number.wav";
   }
 
   Future<void> deleteFile(String filePath) async {
@@ -30,18 +43,6 @@ class LocalFileService {
       debugPrint("Error deleting file: $e");
       rethrow;
     }
-  }
-
-  Future<List<String>> listUserFiles(String userId) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final userDirectory = Directory("${directory.path}/$userId");
-
-    if (!await userDirectory.exists()) {
-      return [];
-    }
-
-    final files = userDirectory.listSync();
-    return files.whereType<File>().map((file) => file.path).toList();
   }
 
   Future<bool> fileExists(String filePath) async {

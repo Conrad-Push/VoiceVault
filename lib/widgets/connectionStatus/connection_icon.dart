@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/connectivity_provider.dart';
+import '../../providers/connectivity_provider.dart';
 
 class ConnectionIcon extends StatelessWidget {
   const ConnectionIcon({super.key});

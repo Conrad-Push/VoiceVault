@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../utils/constants.dart';
-import '../widgets/app_header.dart';
-import '../widgets/connection_icon.dart';
-import '../widgets/custom_modal.dart';
-import '../widgets/network_status_banner.dart';
-import '../widgets/screen_title.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/recording_card.dart';
+import '../widgets/interfaceElements/app_header.dart';
+import '../widgets/connectionStatus/connection_icon.dart';
+import '../widgets/interfaceElements/custom_modal.dart';
+import '../widgets/connectionStatus/network_status_banner.dart';
+import '../widgets/interfaceElements/screen_title.dart';
+import '../widgets/interfaceElements/custom_button.dart';
+import '../widgets/cards/recording_card.dart';
 import '../providers/user_provider.dart';
 import '../services/firebase/firestore_service.dart';
 import 'registration_recording_screen.dart';
@@ -240,10 +240,10 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
     final userName = context.watch<UserProvider>().userName;
 
     return Scaffold(
-      appBar: AppHeader(
+      appBar: const AppHeader(
         title: 'Voice Vault',
         automaticallyImplyLeading: false,
-        trailing: const ConnectionIcon(),
+        trailing: ConnectionIcon(),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
