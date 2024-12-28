@@ -110,9 +110,7 @@ class _RegistrationRecordingScreenState
                     Expanded(flex: 2, child: _buildContent()),
                     Expanded(
                       flex: 1,
-                      child: _filePath == null
-                          ? const Center(child: CircularProgressIndicator())
-                          : AdvancedAudioRecorder(filePath: _filePath!),
+                      child: AdvancedAudioRecorder(filePath: _filePath!),
                     ),
                   ],
                 ),

@@ -25,7 +25,10 @@ class _AdvancedAudioRecorderState extends State<AdvancedAudioRecorder> {
   }
 
   void _checkFileExists() {
-    _fileExists = LocalFileService.instance.fileExists(widget.filePath);
+    _fileExists = Future.delayed(
+      const Duration(seconds: 1),
+      () => LocalFileService.instance.fileExists(widget.filePath),
+    ).then((value) => value);
   }
 
   Future<void> _handleRecordAgain() async {
