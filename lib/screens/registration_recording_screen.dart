@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/local_file_service.dart';
+import '../widgets/audioManagement/advanced_audio_recorder.dart';
 import '../widgets/interfaceElements/app_header.dart';
 import '../widgets/connectionStatus/network_status_banner.dart';
 import '../widgets/interfaceElements/screen_title.dart';
@@ -9,7 +11,7 @@ import '../widgets/registrationContents/individual_sample_content.dart';
 import '../widgets/registrationContents/individual_password_content.dart';
 import '../widgets/registrationContents/shared_password_content.dart';
 
-class RegistrationRecordingScreen extends StatelessWidget {
+class RegistrationRecordingScreen extends StatefulWidget {
   final String userId;
   final String recordingType;
   final String recordingTitle;
@@ -20,6 +22,37 @@ class RegistrationRecordingScreen extends StatelessWidget {
     required this.recordingType,
     required this.recordingTitle,
   });
+
+  @override
+  State<RegistrationRecordingScreen> createState() =>
+      _RegistrationRecordingScreenState();
+}
+
+class _RegistrationRecordingScreenState
+    extends State<RegistrationRecordingScreen> {
+  String? _filePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFilePath();
+  }
+
+  Future<void> _initializeFilePath() async {
+    try {
+      final filePath = await LocalFileService.instance.createFilePath(
+        widget.userId,
+        widget.recordingType,
+        widget.recordingTitle,
+      );
+      setState(() {
+        _filePath = filePath;
+      });
+      debugPrint('File path generated: $filePath');
+    } catch (e) {
+      debugPrint('Error generating file path: $e');
+    }
+  }
 
   void _showCancelModal(BuildContext context) {
     showDialog(
@@ -46,13 +79,13 @@ class RegistrationRecordingScreen extends StatelessWidget {
   }
 
   Widget _buildContent() {
-    switch (recordingType) {
+    switch (widget.recordingType) {
       case 'individualSample':
-        return IndividualSampleContent(recordingTitle: recordingTitle);
+        return IndividualSampleContent(recordingTitle: widget.recordingTitle);
       case 'individualPassword':
-        return IndividualPasswordContent(recordingTitle: recordingTitle);
+        return IndividualPasswordContent(recordingTitle: widget.recordingTitle);
       case 'sharedPassword':
-        return SharedPasswordContent(recordingTitle: recordingTitle);
+        return SharedPasswordContent(recordingTitle: widget.recordingTitle);
       default:
         return const Center(child: Text('Nieznany typ nagrania'));
     }
@@ -73,27 +106,20 @@ class RegistrationRecordingScreen extends StatelessWidget {
           child: Column(
             children: [
               const NetworkStatusBanner(),
-              ScreenTitle(title: 'Nagrywanie - $recordingTitle'),
+              ScreenTitle(title: 'Nagrywanie - ${widget.recordingTitle}'),
               const SizedBox(height: 16),
               Expanded(
                 child: Column(
                   children: [
                     Expanded(
-                      flex: 2,
+                      flex: 2, // Treść ekranu zajmuje większą część
                       child: _buildContent(),
                     ),
                     Expanded(
-                      flex: 1,
-                      child: Center(
-                        child: Text(
-                          'Tutaj znajdzie się widget recordera.',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+                      flex: 1, // AdvancedAudioRecorder zajmuje mniejszą część
+                      child: _filePath == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : AdvancedAudioRecorder(filePath: _filePath!),
                     ),
                   ],
                 ),
@@ -132,5 +158,18 @@ class RegistrationRecordingScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() async {
+    super.dispose();
+    if (_filePath != null &&
+        await LocalFileService.instance.fileExists(_filePath!)) {
+      try {
+        await LocalFileService.instance.deleteFile(_filePath!);
+      } catch (e) {
+        debugPrint('Error deleting temporary file: $e');
+      }
+    }
   }
 }
