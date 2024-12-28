@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
 import '../../services/audio_service.dart';
 
 class AudioRecorder extends StatefulWidget {
-  final String userId;
-  final String recordingType;
-  final String recordingTitle;
+  final String filePath;
+  final VoidCallback onRecordingComplete;
 
   const AudioRecorder({
     super.key,
-    required this.userId,
-    required this.recordingType,
-    required this.recordingTitle,
+    required this.filePath,
+    required this.onRecordingComplete,
   });
 
   @override
-  State<AudioRecorder> createState() => _RecorderState();
+  State<AudioRecorder> createState() => _AudioRecorderState();
 }
 
-class _RecorderState extends State<AudioRecorder> {
+class _AudioRecorderState extends State<AudioRecorder> {
   bool _isRecording = false;
   final AudioService _audioService = AudioService();
+  late final RecorderController _waveformController;
 
   @override
   void initState() {
@@ -28,34 +28,33 @@ class _RecorderState extends State<AudioRecorder> {
   }
 
   Future<void> _initializeRecorder() async {
-    await _audioService.initAudio();
+    _waveformController = RecorderController()
+      ..androidEncoder = AndroidEncoder.aac
+      ..androidOutputFormat = AndroidOutputFormat.mpeg4
+      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
+      ..sampleRate = 44100;
+
+    await _audioService.initRecorder();
   }
 
   Future<void> _startRecording() async {
     try {
-      setState(() {
-        _isRecording = true;
-      });
-
-      await _audioService.startRecording(
-        widget.userId,
-        widget.recordingType,
-        widget.recordingTitle,
-      );
+      setState(() => _isRecording = true);
+      await _waveformController.record();
+      await _audioService.startRecording(widget.filePath);
     } catch (e) {
       debugPrint('Error starting recording: $e');
-      setState(() {
-        _isRecording = false;
-      });
+      setState(() => _isRecording = false);
     }
   }
 
   Future<void> _stopRecording() async {
     try {
       await _audioService.stopRecording();
-      setState(() {
-        _isRecording = false;
-      });
+      await _waveformController.stop();
+      widget.onRecordingComplete();
+      debugPrint('Recording stopped. File saved at: ${widget.filePath}');
+      setState(() => _isRecording = false);
     } catch (e) {
       debugPrint('Error stopping recording: $e');
     }
@@ -63,41 +62,42 @@ class _RecorderState extends State<AudioRecorder> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (_isRecording)
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        children: [
           Expanded(
-            child: Center(
-              child: Text(
-                'Nagrywanie w toku...',
-                style: TextStyle(fontSize: 16, color: Colors.redAccent),
-              ),
-            ),
-          )
-        else
-          Expanded(
-            child: Center(
-              child: Text(
-                'Czekam na nagrywanie...',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+            child: AudioWaveforms(
+              enableGesture: false,
+              size: Size(MediaQuery.of(context).size.width - 40, 50),
+              recorderController: _waveformController,
+              waveStyle: const WaveStyle(
+                waveColor: Colors.blue,
+                extendWaveform: true,
+                showMiddleLine: false,
               ),
             ),
           ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _isRecording ? _stopRecording : _startRecording,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isRecording ? Colors.red : Colors.green,
+          const SizedBox(height: 16),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isRecording
+                  ? const Color(0xFF5A7D9A)
+                  : const Color.fromARGB(255, 228, 83, 73),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: _isRecording ? _stopRecording : _startRecording,
+            child: Text(_isRecording ? 'Zakończ' : 'Nagraj'),
           ),
-          child: Text(_isRecording ? 'Zakończ' : 'Nagraj'),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   @override
   void dispose() {
     _audioService.dispose();
+    _waveformController.dispose();
     super.dispose();
   }
 }

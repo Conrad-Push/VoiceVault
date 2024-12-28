@@ -1,24 +1,20 @@
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:audio_session/audio_session.dart';
-import 'local_file_service.dart';
 import 'package:flutter/foundation.dart';
 
 class AudioService {
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
-  final LocalFileService _fileService = LocalFileService.instance;
 
   /// Statusy
   bool get isRecording => _recorder.isRecording;
   bool get isInitialized => _recorder.isRecording || _recorder.isStopped;
   bool get isPlaying => _player.isPlaying;
 
-  /// Inicjalizuje recorder i player
-  Future<void> initAudio() async {
+  /// Inicjalizuje tylko recorder
+  Future<void> initRecorder() async {
     try {
-      // Inicjalizacja recordera
       await _recorder.openRecorder();
-
       final session = await AudioSession.instance;
       await session.configure(AudioSessionConfiguration(
         avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
@@ -31,29 +27,32 @@ class AudioService {
         androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
         androidWillPauseWhenDucked: true,
       ));
-
-      // Inicjalizacja playera
-      await _player.openPlayer();
+      debugPrint('Recorder initialized');
     } catch (e) {
-      debugPrint('Error initializing audio: $e');
-      throw Exception('Failed to initialize audio: $e');
+      debugPrint('Error initializing recorder: $e');
+      throw Exception('Failed to initialize recorder: $e');
+    }
+  }
+
+  /// Inicjalizuje tylko player
+  Future<void> initPlayer() async {
+    try {
+      await _player.openPlayer();
+      debugPrint('Player initialized');
+    } catch (e) {
+      debugPrint('Error initializing player: $e');
+      throw Exception('Failed to initialize player: $e');
     }
   }
 
   /// Rozpoczyna nagrywanie
-  Future<String> startRecording(
-      String userId, String recordingType, String recordingTitle) async {
+  Future<void> startRecording(String filePath) async {
     if (!isInitialized) {
       throw Exception('Recorder is not initialized');
     }
-
     if (isRecording) {
       throw Exception('Recording is already in progress');
     }
-
-    final filePath = await _fileService.createFilePath(
-        userId, recordingType, recordingTitle);
-
     try {
       await _recorder.startRecorder(
         toFile: filePath,
@@ -61,9 +60,8 @@ class AudioService {
         sampleRate: 44100,
         numChannels: 1,
       );
-      return filePath;
+      debugPrint('Recording started. Saving to: $filePath');
     } catch (e) {
-      await _fileService.deleteFile(filePath); // Cleanup w razie błędu
       debugPrint('Error starting recording: $e');
       throw Exception('Failed to start recording: $e');
     }
@@ -80,29 +78,19 @@ class AudioService {
     }
   }
 
-  /// Pobiera postęp nagrania
-  Stream<Duration>? getRecordingProgress() {
-    return _recorder.onProgress?.map((e) => e.duration);
-  }
-
-  /// Usuwa lokalne nagranie
-  Future<void> deleteLocalRecording(String filePath) async {
-    try {
-      await _fileService.deleteFile(filePath);
-    } catch (e) {
-      debugPrint('Error deleting local recording: $e');
-      throw Exception('Failed to delete local recording: $e');
-    }
-  }
-
   /// Odtwarza nagranie
-  Future<void> playRecording(String filePath) async {
+  Future<void> playRecording(String filePath,
+      {VoidCallback? whenFinished}) async {
     if (_player.isPlaying) {
       throw Exception('Audio is already playing');
     }
 
     try {
-      await _player.startPlayer(fromURI: filePath, codec: Codec.pcm16WAV);
+      await _player.startPlayer(
+        fromURI: filePath,
+        codec: Codec.pcm16WAV,
+        whenFinished: whenFinished,
+      );
     } catch (e) {
       debugPrint('Error playing recording: $e');
       throw Exception('Failed to play recording: $e');
@@ -117,6 +105,16 @@ class AudioService {
       }
     } catch (e) {
       debugPrint('Error stopping playback: $e');
+    }
+  }
+
+  /// Ustawia pozycję odtwarzania
+  Future<void> seekToPosition(Duration position) async {
+    try {
+      await _player.seekToPlayer(position);
+      debugPrint('Seeked to position: ${position.inSeconds} seconds');
+    } catch (e) {
+      debugPrint('Error seeking to position: $e');
     }
   }
 

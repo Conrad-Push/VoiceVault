@@ -23,7 +23,7 @@ class LocalFileService {
   String _generateFileName(String recordingType, String recordingTitle) {
     final formattedType =
         recordingType[0].toUpperCase() + recordingType.substring(1);
-    final match = RegExp(r'#(\d+)\$').firstMatch(recordingTitle);
+    final match = RegExp(r'#(\d+)').firstMatch(recordingTitle);
     if (match == null) {
       throw Exception('Invalid recordingTitle format: $recordingTitle');
     }

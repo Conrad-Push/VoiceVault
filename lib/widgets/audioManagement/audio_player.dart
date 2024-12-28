@@ -1,30 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'dart:async';
-import '../../services/local_file_service.dart';
+import '../../services/audio_service.dart';
 
 class AudioPlayer extends StatefulWidget {
   final String filePath;
-  final VoidCallback? onFileDeleted;
+  final VoidCallback onRecordAgain;
 
   const AudioPlayer({
     super.key,
     required this.filePath,
-    this.onFileDeleted,
+    required this.onRecordAgain,
   });
 
   @override
-  State<AudioPlayer> createState() => _AudioPlayerWidgetState();
+  State<AudioPlayer> createState() => _AudioPlayerState();
 }
 
-class _AudioPlayerWidgetState extends State<AudioPlayer> {
-  final FlutterSoundPlayer _player = FlutterSoundPlayer();
+class _AudioPlayerState extends State<AudioPlayer> {
+  final AudioService _audioService = AudioService();
   bool _isPlaying = false;
-  bool _isPlayerReady = false;
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
-  StreamSubscription? _playerSubscription;
-  final _sliderPositionNotifier = ValueNotifier<Duration>(Duration.zero);
+  final Duration _currentPosition = Duration.zero;
+  Duration _totalDuration = Duration.zero;
 
   @override
   void initState() {
@@ -33,192 +28,92 @@ class _AudioPlayerWidgetState extends State<AudioPlayer> {
   }
 
   Future<void> _initializePlayer() async {
-    await _player.openPlayer();
-    setState(() => _isPlayerReady = true);
-
-    // Set up player subscription to track position
-    _playerSubscription = _player.onProgress?.listen((e) {
-      final duration = e.duration;
-      final position = e.position;
-
-      setState(() {
-        _duration = duration;
-        _position = position;
-      });
-      _sliderPositionNotifier.value = position;
+    await _audioService.initPlayer();
+    setState(() {
+      _totalDuration =
+          Duration.zero; // Możemy zainicjować na 0, jeśli brak danych
     });
   }
 
   Future<void> _playPause() async {
-    if (!_isPlayerReady) return;
-
-    if (_player.isStopped) {
-      await _player.startPlayer(
-        fromURI: widget.filePath,
-        codec: Codec.pcm16WAV,
-        whenFinished: () {
-          setState(() => _isPlaying = false);
-          _sliderPositionNotifier.value = Duration.zero;
-        },
+    if (_isPlaying) {
+      await _audioService.stopPlayback();
+    } else {
+      await _audioService.playRecording(
+        widget.filePath,
+        whenFinished: () => setState(() => _isPlaying = false),
       );
-      setState(() => _isPlaying = true);
-    } else if (_player.isPlaying) {
-      await _player.pausePlayer();
-      setState(() => _isPlaying = false);
-    } else if (_player.isPaused) {
-      await _player.resumePlayer();
-      setState(() => _isPlaying = true);
     }
-  }
-
-  Future<void> _stopPlaying() async {
-    if (!_isPlayerReady) return;
-
-    await _player.stopPlayer();
-    setState(() => _isPlaying = false);
-    _sliderPositionNotifier.value = Duration.zero;
-  }
-
-  Future<void> _seekTo(Duration position) async {
-    if (!_isPlayerReady) return;
-
-    await _player.seekToPlayer(position);
-  }
-
-  Future<void> _deleteFile() async {
-    // Show confirmation dialog
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Recording'),
-        content: const Text(
-            'Are you sure you want to delete this recording? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldDelete != true) return;
-
-    try {
-      // Stop playback if playing
-      if (_player.isPlaying || _player.isPaused) {
-        await _stopPlaying();
-      }
-
-      // Delete the file
-      await LocalFileService.instance.deleteFile(widget.filePath);
-
-      // Notify parent widget
-      widget.onFileDeleted?.call();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting file: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
+    setState(() => _isPlaying = !_isPlaying);
   }
 
   @override
   void dispose() {
-    _playerSubscription?.cancel();
-    _player.closePlayer();
-    _sliderPositionNotifier.dispose();
+    _audioService.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Time and Slider
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_formatDuration(_position)),
-              Expanded(
-                child: ValueListenableBuilder<Duration>(
-                  valueListenable: _sliderPositionNotifier,
-                  builder: (context, position, _) {
-                    return Slider(
-                      value: position.inMilliseconds.toDouble(),
-                      max: _duration.inMilliseconds.toDouble(),
-                      onChanged: (value) {
-                        _sliderPositionNotifier.value =
-                            Duration(milliseconds: value.toInt());
-                      },
-                      onChangeEnd: (value) {
-                        _seekTo(Duration(milliseconds: value.toInt()));
-                      },
-                    );
-                  },
-                ),
+              Text(
+                _formatDuration(_currentPosition),
+                style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
-              Text(_formatDuration(_duration)),
+              Text(
+                _formatDuration(_totalDuration),
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
             ],
           ),
-          // Control buttons
+          Slider(
+            value: _currentPosition.inSeconds.toDouble(),
+            max: _totalDuration.inSeconds.toDouble() > 0
+                ? _totalDuration.inSeconds.toDouble()
+                : 1.0,
+            onChanged: (value) async {
+              final newPosition = Duration(seconds: value.toInt());
+              await _audioService.seekToPosition(newPosition);
+            },
+          ),
+          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              IconButton.filled(
+              ElevatedButton(
                 onPressed: _playPause,
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                color: Colors.white,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                child: Icon(
+                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                  size: 24,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox(width: 16),
-              IconButton.filled(
-                onPressed: _stopPlaying,
-                icon: const Icon(Icons.stop),
-                color: Colors.white,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red,
+              ElevatedButton(
+                onPressed: widget.onRecordAgain,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 228, 83, 73),
+                  foregroundColor: Colors.white,
                 ),
-              ),
-              const SizedBox(width: 16),
-              IconButton.filled(
-                onPressed: _deleteFile,
-                icon: const Icon(Icons.delete),
-                color: Colors.white,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.shade700,
-                ),
+                child: const Text('Nagraj ponownie'),
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 }
