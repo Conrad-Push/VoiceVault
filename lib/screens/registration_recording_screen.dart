@@ -173,63 +173,6 @@ class _RegistrationRecordingScreenState
     }
   }
 
-  // Future<void> _uploadFileAndSaveMetadata(BuildContext context) async {
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) => LoadingModal(
-  //       title: 'Przesyłanie pliku',
-  //       description: 'Trwa przesyłanie nagrania...',
-  //       icon: Icons.cloud_upload,
-  //       iconColor: Colors.blue,
-  //     ),
-  //   );
-
-  //   try {
-  //     // Przesyłanie pliku do Firebase Storage
-  //     final downloadUrl = await StorageService.instance.uploadAudioFile(
-  //       file: File(_filePath!),
-  //       userId: widget.userId,
-  //       recordingType: widget.recordingType,
-  //       fileName: widget.recordingTitle,
-  //     );
-  //     debugPrint('Plik przesłany: $downloadUrl');
-
-  //     // Zapis metadanych w Firestore
-  //     await FirestoreService.instance.addRecording(
-  //       userId: widget.userId,
-  //       type: widget.recordingType,
-  //       filePath: downloadUrl,
-  //       uploadedAt: Timestamp.now(),
-  //       duration: 10.0, // Przykładowa długość nagrania
-  //       fileName: widget.recordingTitle,
-  //     );
-  //     debugPrint('Metadane zapisane w Firestore.');
-
-  //     // Usuwanie pliku lokalnego
-  //     if (_filePath != null) {
-  //       await LocalFileService.instance.deleteFile(_filePath!);
-  //       debugPrint('Lokalny plik usunięty.');
-  //     }
-
-  //     await Future.delayed(const Duration(seconds: 3));
-
-  //     // Sukces: Zamknięcie modala i nawigacja do ekranu nagrań
-  //     if (context.mounted) {
-  //       Navigator.of(context).pop(); // Zamknięcie modala
-  //       Navigator.of(context).pop(); // Powrót do ekranu nagrań
-  //     }
-  //   } catch (e) {
-  //     debugPrint('Błąd przesyłania pliku: $e');
-
-  //     // Porażka: Zamknięcie modala i wyświetlenie błędu
-  //     if (context.mounted) {
-  //       Navigator.of(context).pop(); // Zamknięcie modala
-  //       _showErrorModal(context, e.toString());
-  //     }
-  //   }
-  // }
-
   Widget _buildContent() {
     switch (widget.recordingType) {
       case 'individualSample':
