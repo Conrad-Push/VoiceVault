@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:voice_vault/services/firebase/storage_service.dart';
 import '../providers/connectivity_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/interfaceElements/app_header.dart';
@@ -43,12 +44,6 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
         ModalRoute.of(context)?.isCurrent == true) {
@@ -84,22 +79,10 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
     }
   }
 
-  void _showErrorModal(String errorMessage) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return CustomModal(
-          title: 'Błąd',
-          description:
-              'Nie udało się wykonać operacji. Szczegóły: $errorMessage',
-          icon: Icons.error,
-          iconColor: Colors.red,
-          closeButtonLabel: 'OK',
-          onClosePressed: () => Navigator.of(context).pop(),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   void _showNoConnectionModal(BuildContext context) {
@@ -120,8 +103,26 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
     );
   }
 
-  void _showDeleteRecordingModal(
-      BuildContext context, String userId, String recordingTitle) {
+  void _showErrorModal(String errorMessage) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Błąd',
+          description:
+              'Nie udało się wykonać operacji. Szczegóły: $errorMessage',
+          icon: Icons.error,
+          iconColor: Colors.red,
+          closeButtonLabel: 'OK',
+          onClosePressed: () => Navigator.of(context).pop(),
+        );
+      },
+    );
+  }
+
+  void _showDeleteRecordingModal(BuildContext context, String userId,
+      String recordingType, String recordingTitle) {
     bool isCheckingConnection = false;
 
     showDialog(
@@ -161,7 +162,13 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                 try {
                   await FirestoreService.instance.deleteRecording(
                     userId: userId,
-                    title: recordingTitle,
+                    recordingTitle: recordingTitle,
+                  );
+
+                  await StorageService.instance.deleteAudioFile(
+                    userId: userId,
+                    recordingType: recordingType,
+                    recordingTitle: recordingTitle,
                   );
 
                   if (context.mounted) {
@@ -239,7 +246,13 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                 try {
                   await FirestoreService.instance.deleteRecording(
                     userId: userId,
-                    title: recordingTitle,
+                    recordingTitle: recordingTitle,
+                  );
+
+                  await StorageService.instance.deleteAudioFile(
+                    userId: userId,
+                    recordingType: recordingType,
+                    recordingTitle: recordingTitle,
                   );
 
                   if (context.mounted) {
@@ -309,13 +322,14 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
               ? 'Nagrano: ${recording['subtitle']}'
               : 'Brak nagrania',
           duration: recording['isRecorded']
-              ? 'Długość nagrania: ${recording['duration']} (s)'
+              ? 'Długość nagrania: ${recording['duration']}s'
               : null,
           isRecorded: recording['isRecorded'],
           onDelete: recording['isRecorded']
               ? () => _showDeleteRecordingModal(
                     context,
                     context.read<UserProvider>().userId!,
+                    recordingType,
                     recording['title'],
                   )
               : null,

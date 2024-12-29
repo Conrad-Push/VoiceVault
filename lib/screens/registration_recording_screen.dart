@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../services/firebase/firestore_service.dart';
 import '../services/firebase/storage_service.dart';
 import '../services/local_file_service.dart';
@@ -73,6 +75,24 @@ class _RegistrationRecordingScreenState
     }
   }
 
+  void _showNoConnectionModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Problem z siecią',
+          description:
+              'Funkcjonalność aplikacji ograniczona z powodu braku dostępu do Internetu.',
+          icon: Icons.wifi_off,
+          iconColor: Colors.red,
+          closeButtonLabel: 'OK',
+          onClosePressed: () => Navigator.of(context).pop(),
+        );
+      },
+    );
+  }
+
   void _showCancelModal(BuildContext context) {
     showDialog(
       context: context,
@@ -110,19 +130,6 @@ class _RegistrationRecordingScreenState
     );
   }
 
-  void _onDurationChanged(Duration? duration) {
-    if (duration != null) {
-      setState(() {
-        _audioDuration = duration.inSeconds;
-      });
-    }
-  }
-
-  void _handleNext() {
-    debugPrint("Proceeding to the next step with file: $_filePath");
-    _uploadFileAndSaveMetadata(context);
-  }
-
   Future<void> _uploadFileAndSaveMetadata(BuildContext context) async {
     showDialog(
       context: context,
@@ -134,21 +141,18 @@ class _RegistrationRecordingScreenState
         iconColor: Colors.blue,
       ),
     );
+    String? uploadedFileName;
 
     try {
-      final fileName = await LocalFileService.instance
+      uploadedFileName = await LocalFileService.instance
           .generateFileName(widget.recordingType, widget.recordingTitle);
-      final trimmedFileName = fileName.split('.').first;
 
-      // Symulacja przesyłania pliku
-      await Future.delayed(const Duration(seconds: 3));
-
-      // Generowanie ścieżki pliku do Firestore
-      final String downloadUrl =
-          'https://example.com/audio/${widget.recordingTitle}.wav';
-
-      // debugPrint(
-      //     'UserID: ${widget.userId},\nType: ${widget.recordingType},\nFilePath: $downloadUrl,\nUploadedAt: ${Timestamp.now()},\nDuration: $_audioDuration,\nFileName: $trimmedFileName');
+      final downloadUrl = await StorageService.instance.uploadAudioFile(
+        file: File(_filePath!),
+        userId: widget.userId,
+        recordingType: widget.recordingType,
+        recordingTitle: widget.recordingTitle,
+      );
 
       await FirestoreService.instance.addRecording(
         userId: widget.userId,
@@ -156,7 +160,7 @@ class _RegistrationRecordingScreenState
         filePath: downloadUrl,
         uploadedAt: Timestamp.now(),
         duration: _audioDuration ?? 0,
-        fileName: trimmedFileName,
+        recordingTitle: widget.recordingTitle,
       );
 
       if (context.mounted) {
@@ -166,11 +170,53 @@ class _RegistrationRecordingScreenState
     } catch (e) {
       debugPrint('Błąd przesyłania pliku: $e');
 
+      if (uploadedFileName != null) {
+        try {
+          await StorageService.instance.deleteAudioFile(
+            userId: widget.userId,
+            recordingType: widget.recordingType,
+            recordingTitle: widget.recordingTitle,
+          );
+          debugPrint('Niepowodzenie operacji: plik usunięty ze Storage.');
+        } catch (deletionError) {
+          debugPrint('Błąd podczas usuwania pliku ze Storage: $deletionError');
+        }
+
+        try {
+          await FirestoreService.instance.deleteRecording(
+            userId: widget.userId,
+            recordingTitle: widget.recordingTitle,
+          );
+          debugPrint('Niepowodzenie operacji: dokument usunięty z Firestore.');
+        } catch (deletionError) {
+          debugPrint('Błąd podczas usuwania pliku z Firestore: $deletionError');
+        }
+      }
+
       if (context.mounted) {
         Navigator.of(context).pop();
         _showErrorModal(context, e.toString());
       }
     }
+  }
+
+  void _onDurationChanged(Duration? duration) {
+    if (duration != null) {
+      setState(() {
+        _audioDuration = duration.inSeconds;
+      });
+    }
+  }
+
+  void _handleNext() {
+    final isConnected = context.read<ConnectivityProvider>().isConnected;
+    if (!isConnected) {
+      _showNoConnectionModal(context);
+      return;
+    }
+
+    debugPrint("Proceeding to the next step with file: $_filePath");
+    _uploadFileAndSaveMetadata(context);
   }
 
   Widget _buildContent() {
@@ -196,14 +242,14 @@ class _RegistrationRecordingScreenState
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              const NetworkStatusBanner(),
-              ScreenTitle(title: 'Nagrywanie - ${widget.recordingTitle}'),
-              const SizedBox(height: 16),
-              Expanded(
+        child: Column(
+          children: [
+            const NetworkStatusBanner(),
+            ScreenTitle(title: 'Nagrywanie - ${widget.recordingTitle}'),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Column(
                   children: [
                     Expanded(flex: 2, child: _buildContent()),
@@ -225,32 +271,32 @@ class _RegistrationRecordingScreenState
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => _showCancelModal(context),
-                      style:
-                          ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text('Anuluj',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.15),
-                    ElevatedButton(
-                      onPressed: _isRecordingSaved ? _handleNext : null,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF5A7D9A)),
-                      child: const Text('Dalej',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _showCancelModal(context),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text('Anuluj',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.15),
+                  ElevatedButton(
+                    onPressed: _isRecordingSaved ? _handleNext : null,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5A7D9A)),
+                    child: const Text('Dalej',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            )
+          ],
         ),
       ),
     );

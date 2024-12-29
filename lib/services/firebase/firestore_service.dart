@@ -51,18 +51,14 @@ class FirestoreService {
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(userId);
 
-      // Pobieranie referencji do kolekcji 'recordings'
       final recordingsRef = userRef.collection('recordings');
 
-      // Pobieramy wszystkie dokumenty w 'recordings'
       final recordingsSnapshot = await recordingsRef.get();
 
-      // Usuwamy każdy dokument w 'recordings'
       for (final doc in recordingsSnapshot.docs) {
         await doc.reference.delete();
       }
 
-      // Na końcu usuwamy dokument użytkownika
       await userRef.delete();
 
       LoggingService.instance.log(
@@ -106,14 +102,12 @@ class FirestoreService {
         'sharedPasswords': [],
       };
 
-      // Lista typów nagrań i liczba oczekiwanych plików dla każdego typu
       final Map<String, int> recordingTypes = {
         'individualSamples': 3,
         'individualPasswords': 5,
         'sharedPasswords': 5,
       };
 
-      // Pobieramy wszystkie dokumenty z kolekcji 'recordings'
       final recordingsRef = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -121,7 +115,6 @@ class FirestoreService {
 
       final snapshot = await recordingsRef.get();
 
-      // Przygotowanie domyślnych kafelków dla każdego typu nagrań
       recordingTypes.forEach((type, countValue) {
         recordings[type] = List.generate(
           countValue,
@@ -134,12 +127,10 @@ class FirestoreService {
         );
       });
 
-      // Przetwarzamy dokumenty i przypisujemy do odpowiednich kategorii
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final String docId = doc.id;
 
-        // Rozpoznanie typu nagrania na podstawie ID dokumentu
         String? type;
         if (docId.startsWith('IndividualSample')) {
           type = 'individualSamples';
@@ -152,7 +143,6 @@ class FirestoreService {
         if (type != null) {
           final int number = _extractNumber(docId);
 
-          // Aktualizacja kafelka tylko, jeśli numer jest w dopuszczalnym zakresie
           if (number > 0 && number <= recordingTypes[type]!) {
             recordings[type]![number - 1] = {
               'title': _getTitle(type, docId),
@@ -183,35 +173,32 @@ class FirestoreService {
     required String filePath,
     required Timestamp uploadedAt,
     required int duration,
-    required String fileName,
+    required String recordingTitle,
   }) async {
     try {
-      // Utwórz referencję do dokumentu w kolekcji recordings
+      final fileName = _convertTitleToFileName(recordingTitle);
+
       final recordingDocRef = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('recordings')
-          .doc(fileName); // Używamy fileName jako ID dokumentu
+          .doc(fileName);
 
-      // Dane do zapisania w dokumencie
       final recordingData = {
-        'type':
-            type, // Typ nagrania (np. individualSamples, individualPasswords)
-        'filePath': filePath, // Ścieżka do pliku w Firebase Storage
-        'uploadedAt': uploadedAt, // Timestamp przesłania
-        'duration': duration, // Długość nagrania w sekundach
+        'type': type,
+        'filePath': filePath,
+        'uploadedAt': uploadedAt,
+        'duration': duration,
       };
 
-      // Zapisz dokument w kolekcji recordings
       await recordingDocRef.set(recordingData);
 
       LoggingService.instance.log(
           'Recording $fileName added successfully for user $userId.',
           level: 'info');
     } catch (e) {
-      LoggingService.instance.log(
-          'Failed to add recording $fileName for user $userId: $e',
-          level: 'error');
+      LoggingService.instance
+          .log('Failed to add document for user $userId: $e', level: 'error');
       rethrow;
     }
   }
@@ -219,13 +206,11 @@ class FirestoreService {
   /// Usuwanie nagrania
   Future<void> deleteRecording({
     required String userId,
-    required String title, // Teraz przekazujemy tytuł kafelka
+    required String recordingTitle,
   }) async {
     try {
-      // Konwersja tytułu na nazwę dokumentu
-      final fileName = _convertTitleToFileName(title);
+      final fileName = _convertTitleToFileName(recordingTitle);
 
-      // Lokalizacja dokumentu nagrania w Firestore
       final recordingDocRef = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
