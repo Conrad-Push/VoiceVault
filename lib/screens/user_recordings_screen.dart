@@ -198,6 +198,95 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
     );
   }
 
+  void _showReRecordModal(BuildContext context, String userId,
+      String recordingType, String recordingTitle) {
+    bool isCheckingConnection = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return CustomModal(
+              title: 'Ponowne nagrywanie',
+              description:
+                  'Ponowne nagranie spowoduje usunięcie danych z bazy. Czy na pewno chcesz kontynuować?',
+              icon: Icons.warning,
+              iconColor: const Color(0xFFFFA726),
+              closeButtonLabel: 'Anuluj',
+              onClosePressed: () => Navigator.of(context).pop(),
+              actionButtonLabel: 'Nagraj',
+              actionButtonColor: const Color(0xFFFFA726),
+              isLoading: isCheckingConnection,
+              onActionPressed: () async {
+                setModalState(() {
+                  isCheckingConnection = true;
+                });
+
+                final isConnected =
+                    context.read<ConnectivityProvider>().isConnected;
+
+                if (!isConnected) {
+                  setModalState(() {
+                    isCheckingConnection = false;
+                  });
+
+                  _showNoConnectionModal(context);
+                  return;
+                }
+
+                try {
+                  await FirestoreService.instance.deleteRecording(
+                    userId: userId,
+                    title: recordingTitle,
+                  );
+
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RegistrationRecordingScreen(
+                          userId: context.read<UserProvider>().userId!,
+                          recordingType: recordingType,
+                          recordingTitle: recordingTitle,
+                        ),
+                      ),
+                    ).then((_) {
+                      _showLoader = true;
+
+                      Future.delayed(const Duration(milliseconds: 1000), () {
+                        if (mounted) {
+                          setState(() {
+                            _showLoader = false;
+                          });
+                        }
+                      });
+
+                      _fetchRecordings();
+                    });
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    _showErrorModal(e.toString());
+                  }
+                } finally {
+                  if (context.mounted) {
+                    setModalState(() {
+                      isCheckingConnection = false;
+                    });
+                  }
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   List<Widget> _buildSection(
       String title, List<Map<String, dynamic>> recordings,
       {required String recordingType}) {
@@ -260,6 +349,14 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
               _fetchRecordings();
             });
           },
+          onReRecord: recording['isRecorded']
+              ? () => _showReRecordModal(
+                    context,
+                    context.read<UserProvider>().userId!,
+                    recordingType,
+                    recording['title'],
+                  )
+              : null,
         );
       }),
     ];

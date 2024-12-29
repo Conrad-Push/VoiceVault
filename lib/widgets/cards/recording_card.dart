@@ -8,6 +8,7 @@ class RecordingCard extends StatefulWidget {
   final bool isRecorded;
   final VoidCallback? onDelete;
   final VoidCallback? onRecord;
+  final VoidCallback? onReRecord;
 
   const RecordingCard({
     super.key,
@@ -17,6 +18,7 @@ class RecordingCard extends StatefulWidget {
     required this.isRecorded,
     this.onDelete,
     this.onRecord,
+    this.onReRecord,
   });
 
   @override
@@ -123,7 +125,7 @@ class _RecordingCardState extends State<RecordingCard> {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
-                                onPressed: widget.onRecord,
+                                onPressed: widget.onReRecord,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                       const Color(0xFFFFA726), // Pomarańczowy
