@@ -52,6 +52,16 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
         ModalRoute.of(context)?.isCurrent == true) {
+      _showLoader = true;
+
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          setState(() {
+            _showLoader = false;
+          });
+        }
+      });
+
       _fetchRecordings();
     }
   }
@@ -156,10 +166,18 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
 
                   if (context.mounted) {
                     Navigator.of(context).pop();
-                    setState(() {
-                      _recordingsFuture =
-                          FirestoreService.instance.fetchRecordings(userId);
+
+                    _showLoader = true;
+
+                    Future.delayed(const Duration(milliseconds: 1000), () {
+                      if (mounted) {
+                        setState(() {
+                          _showLoader = false;
+                        });
+                      }
                     });
+
+                    _fetchRecordings();
                   }
                 } catch (e) {
                   if (context.mounted) {
@@ -202,7 +220,7 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
               ? 'Nagrano: ${recording['subtitle']}'
               : 'Brak nagrania',
           duration: recording['isRecorded']
-              ? 'Długość nagrania (s): ${recording['duration']}'
+              ? 'Długość nagrania: ${recording['duration']} (s)'
               : null,
           isRecorded: recording['isRecorded'],
           onDelete: recording['isRecorded']
@@ -228,7 +246,19 @@ class _UserRecordingsScreenState extends State<UserRecordingsScreen>
                   recordingTitle: recording['title'],
                 ),
               ),
-            );
+            ).then((_) {
+              _showLoader = true;
+
+              Future.delayed(const Duration(milliseconds: 1000), () {
+                if (mounted) {
+                  setState(() {
+                    _showLoader = false;
+                  });
+                }
+              });
+
+              _fetchRecordings();
+            });
           },
         );
       }),
