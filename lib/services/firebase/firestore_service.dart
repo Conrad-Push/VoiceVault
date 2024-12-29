@@ -23,25 +23,6 @@ class FirestoreService {
     }
   }
 
-  Future<bool> isEmailRegistered(String email) async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
-
-      final isRegistered = snapshot.docs.isNotEmpty;
-      LoggingService.instance.log(
-          'Checked if email "$email" is registered: $isRegistered',
-          level: 'info');
-      return isRegistered;
-    } catch (e) {
-      LoggingService.instance
-          .log('Failed to check email registration: $e', level: 'error');
-      rethrow;
-    }
-  }
-
   Future<void> addUser({required String name, required String email}) async {
     try {
       final userDoc = FirebaseFirestore.instance.collection('users').doc();
@@ -93,6 +74,25 @@ class FirestoreService {
         'Failed to delete user $userId and related recordings: $e',
         level: 'error',
       );
+      rethrow;
+    }
+  }
+
+  Future<bool> isEmailRegistered(String email) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+
+      final isRegistered = snapshot.docs.isNotEmpty;
+      LoggingService.instance.log(
+          'Checked if email "$email" is registered: $isRegistered',
+          level: 'info');
+      return isRegistered;
+    } catch (e) {
+      LoggingService.instance
+          .log('Failed to check email registration: $e', level: 'error');
       rethrow;
     }
   }
@@ -177,52 +177,12 @@ class FirestoreService {
     }
   }
 
-  // Funkcja generująca czytelne tytuły nagrań
-  String _getTitle(String type, String fileName) {
-    switch (type) {
-      case 'individualSamples':
-        return 'Próbka #${_extractNumber(fileName)}';
-      case 'individualPasswords':
-        return 'Hasło #${_extractNumber(fileName)}';
-      case 'sharedPasswords':
-        return 'Hasło współdzielone #${_extractNumber(fileName)}';
-      default:
-        return fileName;
-    }
-  }
-
-  /// Funkcja pomocnicza do mapowania tytułów na nazwy dokumentów
-  String _convertTitleToFileName(String title) {
-    if (title.startsWith('Próbka')) {
-      final number = title.split('#').last.trim();
-      return 'IndividualSample$number';
-    } else if (title.startsWith('Hasło współdzielone')) {
-      final number = title.split('#').last.trim();
-      return 'SharedPassword$number';
-    } else if (title.startsWith('Hasło')) {
-      final number = title.split('#').last.trim();
-      return 'IndividualPassword$number';
-    }
-    throw Exception('Nieznany format tytułu: $title');
-  }
-
-  // Funkcja wyciągająca numer z nazwy pliku
-  int _extractNumber(String fileName) {
-    final match = RegExp(r'\d+$').firstMatch(fileName);
-    return match != null ? int.parse(match.group(0)!) : 0;
-  }
-
-  // Funkcja formatująca datę na format 'dd.MM.yyyy hh:mm:ss'
-  String _formatDate(DateTime date) {
-    return DateFormat('dd.MM.yyyy HH:mm:ss').format(date);
-  }
-
   Future<void> addRecording({
     required String userId,
     required String type,
     required String filePath,
     required Timestamp uploadedAt,
-    required double duration,
+    required int duration,
     required String fileName,
   }) async {
     try {
@@ -285,5 +245,45 @@ class FirestoreService {
       );
       rethrow;
     }
+  }
+
+  // Funkcja generująca czytelne tytuły nagrań
+  String _getTitle(String type, String fileName) {
+    switch (type) {
+      case 'individualSamples':
+        return 'Próbka #${_extractNumber(fileName)}';
+      case 'individualPasswords':
+        return 'Hasło #${_extractNumber(fileName)}';
+      case 'sharedPasswords':
+        return 'Hasło współdzielone #${_extractNumber(fileName)}';
+      default:
+        return fileName;
+    }
+  }
+
+  /// Funkcja pomocnicza do mapowania tytułów na nazwy dokumentów
+  String _convertTitleToFileName(String title) {
+    if (title.startsWith('Próbka')) {
+      final number = title.split('#').last.trim();
+      return 'IndividualSample$number';
+    } else if (title.startsWith('Hasło współdzielone')) {
+      final number = title.split('#').last.trim();
+      return 'SharedPassword$number';
+    } else if (title.startsWith('Hasło')) {
+      final number = title.split('#').last.trim();
+      return 'IndividualPassword$number';
+    }
+    throw Exception('Nieznany format tytułu: $title');
+  }
+
+  // Funkcja wyciągająca numer z nazwy pliku
+  int _extractNumber(String fileName) {
+    final match = RegExp(r'\d+$').firstMatch(fileName);
+    return match != null ? int.parse(match.group(0)!) : 0;
+  }
+
+  // Funkcja formatująca datę na format 'dd.MM.yyyy hh:mm:ss'
+  String _formatDate(DateTime date) {
+    return DateFormat('dd.MM.yyyy HH:mm:ss').format(date);
   }
 }

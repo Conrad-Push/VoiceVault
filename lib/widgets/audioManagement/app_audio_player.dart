@@ -6,11 +6,13 @@ import '../../services/audio_service.dart';
 class AppAudioPlayer extends StatefulWidget {
   final String filePath;
   final VoidCallback onRecordAgain;
+  final ValueChanged<Duration?> onDurationChanged;
 
   const AppAudioPlayer({
     super.key,
     required this.filePath,
     required this.onRecordAgain,
+    required this.onDurationChanged,
   });
 
   @override
@@ -24,6 +26,7 @@ class _AudioPlayerState extends State<AppAudioPlayer> {
   late StreamSubscription<dynamic> _playerStateSubscription;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  Duration? _totalDuration = Duration.zero;
 
   @override
   void initState() {
@@ -32,7 +35,8 @@ class _AudioPlayerState extends State<AppAudioPlayer> {
   }
 
   Future<void> _initializePlayer() async {
-    await _audioService.initPlayer(widget.filePath);
+    _totalDuration = await _audioService.initPlayer(widget.filePath);
+    widget.onDurationChanged(_totalDuration);
 
     _positionSubscription = _audioService.positionStream.listen((position) {
       setState(() => _position = position);
@@ -89,8 +93,15 @@ class _AudioPlayerState extends State<AppAudioPlayer> {
             min: 0.0,
             max: _duration.inSeconds.toDouble(),
             value: _position.inSeconds.toDouble(),
+            onChangeStart: (value) async {
+              await _audioService.pause();
+            },
             onChanged: (value) async {
+              debugPrint('Time: ${value.toInt()}');
               await _audioService.seek(Duration(seconds: value.toInt()));
+            },
+            onChangeEnd: (value) async {
+              await _audioService.play();
             },
           ),
           const SizedBox(height: 16),
@@ -99,7 +110,10 @@ class _AudioPlayerState extends State<AppAudioPlayer> {
             children: [
               ElevatedButton(
                 onPressed: () => _audioService.playPause(),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: _audioService.isPlaying
+                        ? Color(0xFFFFA726)
+                        : Colors.blue),
                 child: Icon(
                   _audioService.isPlaying ? Icons.pause : Icons.play_arrow,
                   size: 24,

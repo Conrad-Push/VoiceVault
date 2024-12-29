@@ -71,10 +71,11 @@ class AudioService {
   }
 
   /// Inicjalizuje player
-  Future<void> initPlayer(String filePath) async {
+  Future<Duration?> initPlayer(String filePath) async {
     try {
-      await _player.setFilePath(filePath);
+      final duration = await _player.setFilePath(filePath);
       debugPrint('Player initialized with file: $filePath');
+      return duration;
     } catch (e) {
       debugPrint('Error initializing player: $e');
       throw Exception('Failed to initialize player');
@@ -89,11 +90,37 @@ class AudioService {
         debugPrint('Playback paused');
       } else {
         await _player.play();
-        debugPrint('Playback started');
+        debugPrint('Playback paused');
       }
     } catch (e) {
       debugPrint('Error during play/pause: $e');
       throw Exception('Failed to play or pause');
+    }
+  }
+
+  /// Odtwarza nagranie
+  Future<void> play() async {
+    try {
+      if (!_player.playing) {
+        await _player.play();
+        debugPrint('Playback started');
+      }
+    } catch (e) {
+      debugPrint('Error during play: $e');
+      throw Exception('Failed to pause');
+    }
+  }
+
+  /// Pauzuje nagranie
+  Future<void> pause() async {
+    try {
+      if (_player.playing) {
+        await _player.pause();
+        debugPrint('Playback paused');
+      }
+    } catch (e) {
+      debugPrint('Error during pause: $e');
+      throw Exception('Failed to pause');
     }
   }
 

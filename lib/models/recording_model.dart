@@ -8,7 +8,7 @@ class RecordingModel {
   final String
       filePath; // Ścieżka w Firebase Storage (np. userId/individualSamples/IndividualSample1.wav)
   final Timestamp uploadedAt; // Data przesłania nagrania
-  final double duration; // Czas trwania nagrania w sekundach
+  final int duration; // Czas trwania nagrania w sekundach
 
   RecordingModel({
     required this.id,
@@ -26,7 +26,7 @@ class RecordingModel {
       type: data['type'] ?? '',
       filePath: data['filePath'] ?? '',
       uploadedAt: data['uploadedAt'] ?? Timestamp.now(),
-      duration: (data['duration'] as num?)?.toDouble() ?? 0.0,
+      duration: (data['duration'] as num?)?.toInt() ?? 0,
     );
   }
 

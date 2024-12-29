@@ -5,10 +5,16 @@ import 'app_audio_recorder.dart';
 
 class AdvancedAudioRecorder extends StatefulWidget {
   final String filePath;
+  final VoidCallback onRecordingSaved;
+  final VoidCallback onRecordingReset;
+  final ValueChanged<Duration?> onDurationChanged;
 
   const AdvancedAudioRecorder({
     super.key,
     required this.filePath,
+    required this.onRecordingSaved,
+    required this.onRecordingReset,
+    required this.onDurationChanged,
   });
 
   @override
@@ -31,18 +37,46 @@ class _AdvancedAudioRecorderState extends State<AdvancedAudioRecorder> {
     ).then((value) => value);
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _handleRecordAgain() async {
     try {
       await LocalFileService.instance.deleteFile(widget.filePath);
-      setState(() => _checkFileExists());
-      debugPrint('Plik został pomyślnie usunięty: ${widget.filePath}');
+      final fileExists =
+          await LocalFileService.instance.fileExists(widget.filePath);
+
+      if (!fileExists) {
+        widget.onRecordingReset();
+        debugPrint('File deleted successfully: ${widget.filePath}');
+      } else {
+        debugPrint(
+            'File still exists after deletion attempt: ${widget.filePath}');
+      }
     } catch (e) {
-      debugPrint('Nie udało się usunąć pliku: $e');
+      debugPrint('Error while deleting file: $e');
+    } finally {
+      setState(() => _checkFileExists());
     }
   }
 
-  void _onRecordingComplete() {
-    setState(() => _checkFileExists());
+  void _onRecordingComplete() async {
+    try {
+      final fileExists =
+          await LocalFileService.instance.fileExists(widget.filePath);
+      if (fileExists) {
+        widget.onRecordingSaved();
+        debugPrint('Recording completed and file saved: ${widget.filePath}');
+      } else {
+        debugPrint(
+            'Recording completed but file does not exist: ${widget.filePath}');
+      }
+      setState(() => _checkFileExists());
+    } catch (e) {
+      debugPrint('Error verifying file existence: $e');
+    }
   }
 
   @override
@@ -69,6 +103,7 @@ class _AdvancedAudioRecorderState extends State<AdvancedAudioRecorder> {
               ? AppAudioPlayer(
                   filePath: widget.filePath,
                   onRecordAgain: _handleRecordAgain,
+                  onDurationChanged: widget.onDurationChanged,
                 )
               : AppAudioRecorder(
                   filePath: widget.filePath,
