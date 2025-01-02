@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import '../../services/audio_service.dart';
@@ -20,6 +21,8 @@ class _AudioRecorderState extends State<AppAudioRecorder> {
   bool _isRecording = false;
   final AudioService _audioService = AudioService();
   late final RecorderController _waveformController;
+  int _recordingTime = 0;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -37,19 +40,43 @@ class _AudioRecorderState extends State<AppAudioRecorder> {
     await _audioService.initRecorder();
   }
 
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _recordingTime++;
+      });
+
+      // Opcjonalnie: Automatyczne zatrzymanie po 60 sekundach
+      if (_recordingTime >= 60) {
+        _stopRecording();
+      }
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _recordingTime = 0;
+  }
+
   Future<void> _startRecording() async {
     try {
-      setState(() => _isRecording = true);
+      setState(() {
+        _isRecording = true;
+        _recordingTime = 0; // Reset timera przy każdym nagraniu
+      });
+      _startTimer();
       await _waveformController.record();
       await _audioService.startRecording(widget.filePath);
     } catch (e) {
       debugPrint('Error starting recording: $e');
       setState(() => _isRecording = false);
+      _stopTimer();
     }
   }
 
   Future<void> _stopRecording() async {
     try {
+      _stopTimer();
       await _audioService.stopRecording();
       await _waveformController.stop();
       widget.onRecordingComplete();
@@ -57,7 +84,15 @@ class _AudioRecorderState extends State<AppAudioRecorder> {
       setState(() => _isRecording = false);
     } catch (e) {
       debugPrint('Error stopping recording: $e');
+      _stopTimer();
     }
+  }
+
+  String _getRecordingMessage() {
+    if (_recordingTime >= 40) {
+      return "Możesz zakończyć nagrywanie lub kontynuować";
+    }
+    return "Czas nagrania: $_recordingTime (s)";
   }
 
   @override
@@ -77,6 +112,15 @@ class _AudioRecorderState extends State<AppAudioRecorder> {
                 showMiddleLine: false,
               ),
             ),
+          ),
+          Text(
+            _getRecordingMessage(),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -98,6 +142,7 @@ class _AudioRecorderState extends State<AppAudioRecorder> {
   void dispose() {
     _audioService.dispose();
     _waveformController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 }

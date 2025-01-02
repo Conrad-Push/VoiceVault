@@ -16,19 +16,25 @@ class LocalFileService {
       await userDirectory.create(recursive: true);
     }
 
-    final fileName = _generateFileName(recordingType, recordingTitle);
+    final fileName = await generateFileName(recordingType, recordingTitle);
     return "${userDirectory.path}/$fileName";
   }
 
-  String _generateFileName(String recordingType, String recordingTitle) {
-    final formattedType =
-        recordingType[0].toUpperCase() + recordingType.substring(1);
-    final match = RegExp(r'#(\d+)').firstMatch(recordingTitle);
-    if (match == null) {
-      throw Exception('Invalid recordingTitle format: $recordingTitle');
+  Future<String> generateFileName(
+      String recordingType, String recordingTitle) async {
+    try {
+      final formattedType =
+          recordingType[0].toUpperCase() + recordingType.substring(1);
+      final match = RegExp(r'#(\d+)').firstMatch(recordingTitle);
+      if (match == null) {
+        throw Exception('Invalid recordingTitle format: $recordingTitle');
+      }
+      final number = match.group(1);
+      return "$formattedType$number.wav";
+    } catch (e) {
+      debugPrint("Error generating file name: $e");
+      rethrow;
     }
-    final number = match.group(1);
-    return "$formattedType$number.wav";
   }
 
   Future<void> deleteFile(String filePath) async {

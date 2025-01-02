@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voice_vault/utils/constants.dart';
 
 class IndividualSampleContent extends StatelessWidget {
   final String recordingTitle;
@@ -11,11 +12,11 @@ class IndividualSampleContent extends StatelessWidget {
   String _getReadingText() {
     switch (recordingTitle) {
       case 'Próbka #1':
-        return 'To jest tekst dla próbki pierwszej. Należy go przeczytać płynnie i wyraźnie.';
+        return AppTexts.individualSample1Text;
       case 'Próbka #2':
-        return 'To jest tekst dla próbki drugiej. Zachowaj naturalny rytm mowy.';
+        return AppTexts.individualSample2Text;
       case 'Próbka #3':
-        return 'To jest tekst dla próbki trzeciej. Prosimy o dokładne przeczytanie.';
+        return AppTexts.individualSample3Text;
       default:
         return 'Nieznany tekst próbki';
     }
@@ -60,7 +61,7 @@ class IndividualSampleContent extends StatelessWidget {
                   child: Text(
                     _getReadingText(),
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       color: Colors.black87,
                     ),
                   ),

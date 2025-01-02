@@ -23,25 +23,6 @@ class FirestoreService {
     }
   }
 
-  Future<bool> isEmailRegistered(String email) async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
-
-      final isRegistered = snapshot.docs.isNotEmpty;
-      LoggingService.instance.log(
-          'Checked if email "$email" is registered: $isRegistered',
-          level: 'info');
-      return isRegistered;
-    } catch (e) {
-      LoggingService.instance
-          .log('Failed to check email registration: $e', level: 'error');
-      rethrow;
-    }
-  }
-
   Future<void> addUser({required String name, required String email}) async {
     try {
       final userDoc = FirebaseFirestore.instance.collection('users').doc();
@@ -70,18 +51,14 @@ class FirestoreService {
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(userId);
 
-      // Pobieranie referencji do kolekcji 'recordings'
       final recordingsRef = userRef.collection('recordings');
 
-      // Pobieramy wszystkie dokumenty w 'recordings'
       final recordingsSnapshot = await recordingsRef.get();
 
-      // Usuwamy każdy dokument w 'recordings'
       for (final doc in recordingsSnapshot.docs) {
         await doc.reference.delete();
       }
 
-      // Na końcu usuwamy dokument użytkownika
       await userRef.delete();
 
       LoggingService.instance.log(
@@ -97,6 +74,25 @@ class FirestoreService {
     }
   }
 
+  Future<bool> isEmailRegistered(String email) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+
+      final isRegistered = snapshot.docs.isNotEmpty;
+      LoggingService.instance.log(
+          'Checked if email "$email" is registered: $isRegistered',
+          level: 'info');
+      return isRegistered;
+    } catch (e) {
+      LoggingService.instance
+          .log('Failed to check email registration: $e', level: 'error');
+      rethrow;
+    }
+  }
+
   Future<Map<String, List<Map<String, dynamic>>>> fetchRecordings(
       String userId) async {
     try {
@@ -106,14 +102,12 @@ class FirestoreService {
         'sharedPasswords': [],
       };
 
-      // Lista typów nagrań i liczba oczekiwanych plików dla każdego typu
       final Map<String, int> recordingTypes = {
         'individualSamples': 3,
         'individualPasswords': 5,
         'sharedPasswords': 5,
       };
 
-      // Pobieramy wszystkie dokumenty z kolekcji 'recordings'
       final recordingsRef = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -121,7 +115,6 @@ class FirestoreService {
 
       final snapshot = await recordingsRef.get();
 
-      // Przygotowanie domyślnych kafelków dla każdego typu nagrań
       recordingTypes.forEach((type, countValue) {
         recordings[type] = List.generate(
           countValue,
@@ -134,12 +127,10 @@ class FirestoreService {
         );
       });
 
-      // Przetwarzamy dokumenty i przypisujemy do odpowiednich kategorii
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final String docId = doc.id;
 
-        // Rozpoznanie typu nagrania na podstawie ID dokumentu
         String? type;
         if (docId.startsWith('IndividualSample')) {
           type = 'individualSamples';
@@ -152,7 +143,6 @@ class FirestoreService {
         if (type != null) {
           final int number = _extractNumber(docId);
 
-          // Aktualizacja kafelka tylko, jeśli numer jest w dopuszczalnym zakresie
           if (number > 0 && number <= recordingTypes[type]!) {
             recordings[type]![number - 1] = {
               'title': _getTitle(type, docId),
@@ -174,6 +164,71 @@ class FirestoreService {
         'individualPasswords': [],
         'sharedPasswords': [],
       };
+    }
+  }
+
+  Future<void> addRecording({
+    required String userId,
+    required String type,
+    required String filePath,
+    required Timestamp uploadedAt,
+    required int duration,
+    required String recordingTitle,
+  }) async {
+    try {
+      final fileName = _convertTitleToFileName(recordingTitle);
+
+      final recordingDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('recordings')
+          .doc(fileName);
+
+      final recordingData = {
+        'type': type,
+        'filePath': filePath,
+        'uploadedAt': uploadedAt,
+        'duration': duration,
+      };
+
+      await recordingDocRef.set(recordingData);
+
+      LoggingService.instance.log(
+          'Recording $fileName added successfully for user $userId.',
+          level: 'info');
+    } catch (e) {
+      LoggingService.instance
+          .log('Failed to add document for user $userId: $e', level: 'error');
+      rethrow;
+    }
+  }
+
+  /// Usuwanie nagrania
+  Future<void> deleteRecording({
+    required String userId,
+    required String recordingTitle,
+  }) async {
+    try {
+      final fileName = _convertTitleToFileName(recordingTitle);
+
+      final recordingDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('recordings')
+          .doc(fileName);
+
+      await recordingDocRef.delete();
+
+      LoggingService.instance.log(
+        'Recording $fileName deleted for user $userId.',
+        level: 'info',
+      );
+    } catch (e) {
+      LoggingService.instance.log(
+        'Failed to delete recording for user $userId: $e',
+        level: 'error',
+      );
+      rethrow;
     }
   }
 
@@ -215,75 +270,5 @@ class FirestoreService {
   // Funkcja formatująca datę na format 'dd.MM.yyyy hh:mm:ss'
   String _formatDate(DateTime date) {
     return DateFormat('dd.MM.yyyy HH:mm:ss').format(date);
-  }
-
-  Future<void> addRecording({
-    required String userId,
-    required String type,
-    required String filePath,
-    required Timestamp uploadedAt,
-    required double duration,
-    required String fileName,
-  }) async {
-    try {
-      // Utwórz referencję do dokumentu w kolekcji recordings
-      final recordingDocRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('recordings')
-          .doc(fileName); // Używamy fileName jako ID dokumentu
-
-      // Dane do zapisania w dokumencie
-      final recordingData = {
-        'type':
-            type, // Typ nagrania (np. individualSamples, individualPasswords)
-        'filePath': filePath, // Ścieżka do pliku w Firebase Storage
-        'uploadedAt': uploadedAt, // Timestamp przesłania
-        'duration': duration, // Długość nagrania w sekundach
-      };
-
-      // Zapisz dokument w kolekcji recordings
-      await recordingDocRef.set(recordingData);
-
-      LoggingService.instance.log(
-          'Recording $fileName added successfully for user $userId.',
-          level: 'info');
-    } catch (e) {
-      LoggingService.instance.log(
-          'Failed to add recording $fileName for user $userId: $e',
-          level: 'error');
-      rethrow;
-    }
-  }
-
-  /// Usuwanie nagrania
-  Future<void> deleteRecording({
-    required String userId,
-    required String title, // Teraz przekazujemy tytuł kafelka
-  }) async {
-    try {
-      // Konwersja tytułu na nazwę dokumentu
-      final fileName = _convertTitleToFileName(title);
-
-      // Lokalizacja dokumentu nagrania w Firestore
-      final recordingDocRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('recordings')
-          .doc(fileName);
-
-      await recordingDocRef.delete();
-
-      LoggingService.instance.log(
-        'Recording $fileName deleted for user $userId.',
-        level: 'info',
-      );
-    } catch (e) {
-      LoggingService.instance.log(
-        'Failed to delete recording for user $userId: $e',
-        level: 'error',
-      );
-      rethrow;
-    }
   }
 }

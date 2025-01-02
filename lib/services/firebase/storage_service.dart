@@ -10,17 +10,18 @@ class StorageService {
     required File file,
     required String userId,
     required String recordingType,
-    required String fileName,
+    required String recordingTitle,
     Function(double)? onProgress,
   }) async {
     try {
+      final fileName = _convertTitleToFileName(recordingTitle);
+
       final storageRef = FirebaseStorage.instance
           .ref()
-          .child('$userId/$recordingType/$fileName');
+          .child('$userId/${recordingType}s/$fileName');
 
       final uploadTask = storageRef.putFile(file);
 
-      // Monitorowanie postępu
       if (onProgress != null) {
         uploadTask.snapshotEvents.listen((event) {
           final progress = (event.bytesTransferred / event.totalBytes) * 100;
@@ -30,7 +31,6 @@ class StorageService {
 
       final snapshot = await uploadTask;
 
-      // Pobranie URL do pliku
       final downloadUrl = await snapshot.ref.getDownloadURL();
       debugPrint('File uploaded successfully: $downloadUrl');
       return downloadUrl;
@@ -43,17 +43,33 @@ class StorageService {
   Future<void> deleteAudioFile({
     required String userId,
     required String recordingType,
-    required String fileName,
+    required String recordingTitle,
   }) async {
     try {
+      final fileName = _convertTitleToFileName(recordingTitle);
+
       final storageRef = FirebaseStorage.instance
           .ref()
-          .child('$userId/$recordingType/$fileName');
+          .child('$userId/${recordingType}s/$fileName');
       await storageRef.delete();
       debugPrint('File deleted successfully.');
     } catch (e) {
       debugPrint('Error deleting file: $e');
       rethrow;
     }
+  }
+
+  String _convertTitleToFileName(String title) {
+    if (title.startsWith('Próbka')) {
+      final number = title.split('#').last.trim();
+      return 'IndividualSample$number.wav';
+    } else if (title.startsWith('Hasło współdzielone')) {
+      final number = title.split('#').last.trim();
+      return 'SharedPassword$number.wav';
+    } else if (title.startsWith('Hasło')) {
+      final number = title.split('#').last.trim();
+      return 'IndividualPassword$number.wav';
+    }
+    throw Exception('Nieznany format tytułu: $title');
   }
 }
